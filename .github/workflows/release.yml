@@ -1,0 +1,51 @@
+name: Build Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: stable
+
+      - name: Restore gradle distribution URL
+        run: |
+          sed -i 's#mirrors.cloud.tencent.com/gradle/#services.gradle.org/distributions/#g' \
+            android/gradle/wrapper/gradle-wrapper.properties
+        working-directory: app
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release
+        working-directory: app
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: astrbot助手 ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: app/build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
