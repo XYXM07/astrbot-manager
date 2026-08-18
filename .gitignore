@@ -1,0 +1,24 @@
+# 构建产物
+*.apk
+build/
+.dart_tool/
+app/android/.gradle/
+
+# 根目录截图/照片（可能含隐私信息）
+/*.jpg
+/*.jpeg
+/*.png
+!/图标.png
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 工具依赖
+tools/node_modules/
+tools/npm-cache/
