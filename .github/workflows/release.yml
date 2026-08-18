@@ -40,12 +40,19 @@ jobs:
           flutter build apk --release
         working-directory: app
 
+      - name: Rename APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "astrbot助手-${{ github.ref_name }}.apk"
+        working-directory: app
+
       - name: Upload APK to Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: astrbot助手 ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: app/build/app/outputs/flutter-apk/app-release.apk
+          files: app/astrbot助手-${{ github.ref_name }}.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
