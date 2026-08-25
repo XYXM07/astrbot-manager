@@ -550,7 +550,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text('astrbot助手', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
                         Spacer(),
                         Text(
-                          'v1.0.0',
+                          'v1.1.0',
                           style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.55)),
                         ),
                       ],
