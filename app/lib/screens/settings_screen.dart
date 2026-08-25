@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
+import '../services/ai_analyze.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../utils/image_utils.dart';
@@ -121,6 +122,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final app = context.read<AppState>();
     await app.updateSettings(      app.settings.copyWith(backgroundImagePath: ''),
     );
+  }
+
+  /// 从当前 API 拉取可用模型列表并选择
+  Future<void> _searchModels() async {
+    final app = context.read<AppState>();
+    final s = app.settings;
+    if (s.apiBaseUrl.trim().isEmpty || s.apiKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.t('请先在设置中配置 AI 分析 API'))),
+      );
+      return;
+    }
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => FrostedSheet(
+        child: _ModelPickerSheet(
+          baseUrl: s.apiBaseUrl.trim(),
+          apiKey: s.apiKey.trim(),
+        ),
+      ),
+    );
+    if (picked != null && mounted) {
+      _apiModel.text = picked;
+      await app.updateSettings(s.copyWith(apiModel: picked));
+    }
   }
 
   @override
@@ -502,6 +530,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         s.copyWith(apiModel: v),
                       ),
                     ),
+                    SizedBox(height: 10),
+                    FrostedButton(
+                      label: L10n.t('搜索可用模型'),
+                      icon: Icons.search,
+                      onPressed: _searchModels,
+                    ),
                   ],
                 ),
               ),
@@ -698,6 +732,180 @@ class _AnimatedSwitchRowState extends State<_AnimatedSwitchRow> {
             onChanged: _toggle,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 模型选择面板：从配置的 API 拉取可用模型，支持搜索过滤
+class _ModelPickerSheet extends StatefulWidget {
+  final String baseUrl;
+  final String apiKey;
+
+  const _ModelPickerSheet({required this.baseUrl, required this.apiKey});
+
+  @override
+  State<_ModelPickerSheet> createState() => _ModelPickerSheetState();
+}
+
+class _ModelPickerSheetState extends State<_ModelPickerSheet> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  List<String>? _models;
+  String? _error;
+  bool _loading = true;
+  String _q = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final m = await AiAnalyzeService.listModels(
+        baseUrl: widget.baseUrl,
+        apiKey: widget.apiKey,
+      );
+      if (!mounted) return;
+      setState(() {
+        _models = m;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$e';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final models = _models ?? const <String>[];
+    final filtered = _q.trim().isEmpty
+        ? models
+        : models.where((m) => m.toLowerCase().contains(_q.trim().toLowerCase())).toList();
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 460),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.smart_toy, size: 18, color: AppColors.violet),
+                  SizedBox(width: 8),
+                  Text(
+                    L10n.t('选择模型'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                  ),
+                  Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.close, size: 20, color: AppColors.text.withOpacity(0.7)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 14),
+              if (_loading)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(color: AppColors.violet),
+                        SizedBox(height: 12),
+                        Text(
+                          L10n.t('正在获取模型…'),
+                          style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (_error != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        color: AppColors.red.withOpacity(0.12),
+                      ),
+                      child: Text(
+                        L10n.t('搜索失败：{err}', {'err': _error!}),
+                        style: TextStyle(fontSize: 12.5, color: AppColors.red),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    FrostedButton(
+                      label: L10n.t('重试'),
+                      icon: Icons.refresh,
+                      color: AppColors.red,
+                      onPressed: _load,
+                    ),
+                  ],
+                )
+              else ...[
+                GlassTextField(
+                  controller: _searchCtrl,
+                  label: L10n.t('搜索模型'),
+                  icon: Icons.search,
+                  onChanged: (v) => setState(() => _q = v),
+                ),
+                SizedBox(height: 10),
+                if (filtered.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        L10n.t('未找到模型'),
+                        style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.55)),
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final id = filtered[i];
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(Icons.model_training, size: 19, color: AppColors.violet),
+                          title: Text(
+                            id,
+                            style: TextStyle(fontSize: 13.5, color: AppColors.text),
+                          ),
+                          onTap: () => Navigator.of(context).pop(id),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

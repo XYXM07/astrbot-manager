@@ -53,4 +53,28 @@ class AiAnalyzeService {
     }
     return text;
   }
+
+  /// 拉取当前 API 可用的模型列表（GET /models）
+  static Future<List<String>> listModels({
+    required String baseUrl,
+    required String apiKey,
+  }) async {
+    final url = '${baseUrl.replaceAll(RegExp(r'/+$'), '')}/models';
+    final resp = await http
+        .get(
+          Uri.parse(url),
+          headers: {'Authorization': 'Bearer $apiKey'},
+        )
+        .timeout(const Duration(seconds: 30));
+    if (resp.statusCode != 200) {
+      throw Exception('HTTP ${resp.statusCode}\n${resp.body}');
+    }
+    final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    final list = data['data'] as List? ?? [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map((m) => m['id'] as String?)
+        .whereType<String>()
+        .toList();
+  }
 }

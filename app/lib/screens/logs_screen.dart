@@ -215,14 +215,11 @@ class _LogsScreenState extends State<LogsScreen> {
                       ),
                     ),
                     SizedBox(width: 10),
-                    Tooltip(
-                      message: L10n.t('AI 分析'),
-                      child: FrostedButton(
-                        label: '',
-                        icon: Icons.auto_awesome,
-                        color: AppColors.violet,
-                        onPressed: _logs.isEmpty ? null : _analyze,
-                      ),
+                    FrostedButton(
+                      label: L10n.t('AI 分析'),
+                      icon: Icons.auto_awesome,
+                      color: AppColors.violet,
+                      onPressed: _logs.isEmpty ? null : _analyze,
                     ),
                     SizedBox(width: 10),
                     Tooltip(

@@ -180,6 +180,12 @@ class L10n {
     'API 地址': 'API base URL',
     'API Key': 'API Key',
     '模型': 'Model',
+    '搜索可用模型': 'Search available models',
+    '选择模型': 'Select model',
+    '搜索模型': 'Search model',
+    '正在获取模型…': 'Fetching models…',
+    '未找到模型': 'No models found',
+    '搜索失败：{err}': 'Model search failed: {err}',
     '请先在设置中配置 AI 分析 API':
         'Please configure the AI analysis API in Settings first',
     '没有可分析的内容': 'Nothing to analyze',
