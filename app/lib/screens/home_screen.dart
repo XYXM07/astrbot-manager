@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _iconBtn(
               Icons.settings,
-              () => ShellTabs.index.value = 2,
+              () => ShellTabs.index.value = 3,
             ),
             SizedBox(width: 8),
             if (app.connected)
@@ -566,7 +566,7 @@ class _ServiceCard extends StatelessWidget {
                   icon: Icons.language,
                   onPressed: () {
                     context.read<AppState>().openWebuiSession(service);
-                    ShellTabs.index.value = 1;
+                    ShellTabs.index.value = 2;
                   },
                 ),
               ),

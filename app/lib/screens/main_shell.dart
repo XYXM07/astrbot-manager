@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
+import '../screens/files_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/webui_page.dart';
@@ -32,6 +33,7 @@ class _MainShellState extends State<MainShell> {
             index: idx,
             children: [
               HomeScreen(),
+              FilesScreen(),
               WebUiSessionsPage(),
               SettingsScreen(),
             ],
@@ -63,6 +65,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.space_dashboard),
             selectedIcon: Icon(Icons.space_dashboard),
             label: L10n.t('仪表盘'),
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.folder),
+            selectedIcon: Icon(Icons.folder),
+            label: L10n.t('文件'),
           ),
           NavigationDestination(
             icon: Icon(Icons.language),
