@@ -107,12 +107,14 @@ class _LogsScreenState extends State<LogsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _AiResultSheet(
-        content: content,
-        baseUrl: s.apiBaseUrl.trim(),
-        apiKey: s.apiKey.trim(),
-        model: s.apiModel.trim(),
-        useSelection: useSel,
+      builder: (_) => FrostedSheet(
+        child: _AiResultSheet(
+          content: content,
+          baseUrl: s.apiBaseUrl.trim(),
+          apiKey: s.apiKey.trim(),
+          model: s.apiModel.trim(),
+          useSelection: useSel,
+        ),
       ),
     );
   }
@@ -126,11 +128,6 @@ class _LogsScreenState extends State<LogsScreen> {
         appBar: AppBar(
           title: Text(L10n.t('{name} · 日志', {'name': service.name})),
           actions: [
-            IconButton(
-              icon: Icon(Icons.auto_awesome, size: 20, color: AppColors.violet),
-              tooltip: L10n.t('AI 分析'),
-              onPressed: _logs.isEmpty ? null : _analyze,
-            ),
             IconButton(
               icon: Icon(Icons.copy, size: 20),
               onPressed: _logs.isEmpty ? null : _copy,
@@ -217,10 +214,21 @@ class _LogsScreenState extends State<LogsScreen> {
                         onPressed: _fetch,
                       ),
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
+                    SizedBox(width: 10),
+                    Tooltip(
+                      message: L10n.t('AI 分析'),
                       child: FrostedButton(
-                        label: L10n.t('滚动到底部'),
+                        label: '',
+                        icon: Icons.auto_awesome,
+                        color: AppColors.violet,
+                        onPressed: _logs.isEmpty ? null : _analyze,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Tooltip(
+                      message: L10n.t('滚动到底部'),
+                      child: FrostedButton(
+                        label: '',
                         icon: Icons.vertical_align_bottom,
                         onPressed: () {
                           if (_scroll.hasClients) {
