@@ -17,6 +17,7 @@ dependencies:
   webview_flutter: ^4.10.0
   image_picker: ^1.1.2
   path_provider: ^2.1.5
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

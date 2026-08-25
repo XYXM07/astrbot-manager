@@ -22,6 +22,27 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  late final TextEditingController _apiBase;
+  late final MaskTextController _apiKey;
+  late final TextEditingController _apiModel;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = context.read<AppState>().settings;
+    _apiBase = TextEditingController(text: s.apiBaseUrl);
+    _apiKey = MaskTextController(text: s.apiKey);
+    _apiModel = TextEditingController(text: s.apiModel);
+  }
+
+  @override
+  void dispose() {
+    _apiBase.dispose();
+    _apiKey.dispose();
+    _apiModel.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickBackground() async {
     final app = context.read<AppState>();
     try {
@@ -424,6 +445,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       inactiveColor: AppColors.text.withOpacity(0.2),
                       onChanged: (v) =>
                           app.updateSettings(s.copyWith(logFontSize: v)),
+                    ),
+                  ],
+                ),
+              ),
+              _sectionTitle(L10n.t('AI 分析')),
+              GlassCard(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      L10n.t('AI 日志分析'),
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: AppColors.text.withOpacity(0.85),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      L10n.t('支持 OpenAI 兼容接口（DeepSeek / 通义千问 / Moonshot 等），用于日志页一键分析报错原因'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: AppColors.text.withOpacity(0.45),
+                      ),
+                    ),
+                    SizedBox(height: 14),
+                    GlassTextField(
+                      controller: _apiBase,
+                      label: L10n.t('API 地址'),
+                      icon: Icons.dns,
+                      keyboard: TextInputType.url,
+                      hint: 'https://api.deepseek.com/v1',
+                      onChanged: (v) => app.updateSettings(
+                        s.copyWith(apiBaseUrl: v),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    GlassTextField(
+                      controller: _apiKey,
+                      label: L10n.t('API Key'),
+                      icon: Icons.key,
+                      masked: true,
+                      onChanged: (v) => app.updateSettings(
+                        s.copyWith(apiKey: v),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    GlassTextField(
+                      controller: _apiModel,
+                      label: L10n.t('模型'),
+                      icon: Icons.smart_toy,
+                      hint: 'deepseek-chat',
+                      onChanged: (v) => app.updateSettings(
+                        s.copyWith(apiModel: v),
+                      ),
                     ),
                   ],
                 ),

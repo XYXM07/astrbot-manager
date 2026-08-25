@@ -172,6 +172,23 @@ class L10n {
     '日志默认行数': 'Default log lines',
     '{n} 行': '{n} lines',
     '日志字号': 'Log font size',
+    'AI 分析': 'AI Analysis',
+    'AI 分析结果': 'AI Analysis Result',
+    'AI 日志分析': 'AI Log Analysis',
+    '支持 OpenAI 兼容接口（DeepSeek / 通义千问 / Moonshot 等），用于日志页一键分析报错原因':
+        'Supports OpenAI-compatible APIs (DeepSeek / Qwen / Moonshot…). Used for one-tap error analysis on the logs page',
+    'API 地址': 'API base URL',
+    'API Key': 'API Key',
+    '模型': 'Model',
+    '请先在设置中配置 AI 分析 API':
+        'Please configure the AI analysis API in Settings first',
+    '没有可分析的内容': 'Nothing to analyze',
+    '正在分析…': 'Analyzing…',
+    '分析失败：{err}': 'Analysis failed: {err}',
+    '分析选中内容': 'Analyzing selected text',
+    '分析全部日志': 'Analyzing the full log',
+    '复制结果': 'Copy result',
+    '已复制到剪贴板': 'Copied to clipboard',
     '关于': 'About',
     '作者：星月晓梦_07': 'Author: 星月晓梦_07',
     '通过 SSH 直连远程管理服务器上的 AstrBot 与 NapCat。连接凭据仅加密保存在本机，所有操作经 SSH 加密传输。':

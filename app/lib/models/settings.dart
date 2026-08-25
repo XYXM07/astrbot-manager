@@ -30,6 +30,15 @@ class AppSettings {
   /// 界面顶部图标（1:1 图片，空表示使用默认图标）
   String logoImagePath;
 
+  /// AI 分析 API（OpenAI 兼容格式）
+  String apiBaseUrl;
+
+  /// AI 分析 API Key
+  String apiKey;
+
+  /// AI 分析模型名
+  String apiModel;
+
   AppSettings({
     this.blurEnabled = false,
     this.blurSigma = 22,
@@ -41,6 +50,9 @@ class AppSettings {
     this.logFontSize = 14.0,
     this.backgroundImagePath = '',
     this.logoImagePath = '',
+    this.apiBaseUrl = 'https://api.deepseek.com/v1',
+    this.apiKey = '',
+    this.apiModel = 'deepseek-chat',
   });
 
   AppSettings copyWith({
@@ -54,6 +66,9 @@ class AppSettings {
     double? logFontSize,
     String? backgroundImagePath,
     String? logoImagePath,
+    String? apiBaseUrl,
+    String? apiKey,
+    String? apiModel,
   }) {
     return AppSettings(
       blurEnabled: blurEnabled ?? this.blurEnabled,
@@ -66,6 +81,9 @@ class AppSettings {
       logFontSize: logFontSize ?? this.logFontSize,
       backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
       logoImagePath: logoImagePath ?? this.logoImagePath,
+      apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
+      apiKey: apiKey ?? this.apiKey,
+      apiModel: apiModel ?? this.apiModel,
     );
   }
 
@@ -81,6 +99,9 @@ class AppSettings {
       logFontSize: (j['logFontSize'] as num?)?.toDouble() ?? 14.0,
       backgroundImagePath: j['backgroundImagePath'] as String? ?? '',
       logoImagePath: j['logoImagePath'] as String? ?? '',
+      apiBaseUrl: j['apiBaseUrl'] as String? ?? 'https://api.deepseek.com/v1',
+      apiKey: j['apiKey'] as String? ?? '',
+      apiModel: j['apiModel'] as String? ?? 'deepseek-chat',
     );
   }
 
@@ -95,5 +116,8 @@ class AppSettings {
         'logFontSize': logFontSize,
         'backgroundImagePath': backgroundImagePath,
         'logoImagePath': logoImagePath,
+        'apiBaseUrl': apiBaseUrl,
+        'apiKey': apiKey,
+        'apiModel': apiModel,
       };
 }

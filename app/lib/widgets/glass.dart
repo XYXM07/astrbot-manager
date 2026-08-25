@@ -269,6 +269,9 @@ class GlassTextField extends StatelessWidget {
   /// 手动遮挡模式：不声明为密码类型（彻底避免系统安全键盘），由 MaskTextController 渲染圆点
   final bool masked;
 
+  /// 输入变化回调（用于即时保存设置等）
+  final ValueChanged<String>? onChanged;
+
   GlassTextField({
     super.key,
     required this.controller,
@@ -282,6 +285,7 @@ class GlassTextField extends StatelessWidget {
     this.maxLines = 1,
     this.validator,
     this.masked = false,
+    this.onChanged,
   });
 
   @override
@@ -290,6 +294,7 @@ class GlassTextField extends StatelessWidget {
       controller: controller,
       obscureText: masked ? false : obscure,
       maxLines: maxLines,
+      onChanged: onChanged,
       // 密码字段使用 visiblePassword 类型，避免触发手机安全键盘（及其黄色指示条）
       keyboardType: masked
           ? TextInputType.text
