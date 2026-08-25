@@ -112,6 +112,16 @@ class L10n {
     '磁盘': 'Disk',
     '编辑服务': 'Edit service',
     '删除服务': 'Delete service',
+    '重启服务器': 'Reboot server',
+    '强制关机': 'Force shutdown',
+    '确认执行': 'Execute',
+    '将远程执行 {cmd} 命令，服务器将立即重启，SSH 连接会断开。':
+        'The command {cmd} will be run; the server will reboot immediately and the SSH connection will drop.',
+    '将远程执行 {cmd} 命令，服务器将立即关机，SSH 连接会断开。':
+        'The command {cmd} will be run; the server will shut down immediately and the SSH connection will drop.',
+    '命令已发送，服务器即将重启': 'Command sent; the server is rebooting',
+    '命令已发送，服务器即将关机': 'Command sent; the server is shutting down',
+    '执行失败：{err}': 'Execution failed: {err}',
     '确认重启 {name}？': 'Restart {name}?',
     '将远程执行重启命令，服务会短暂离线。':
         'This will run the restart command remotely; the service will be offline briefly.',

@@ -285,6 +285,32 @@ class ManagerService {
     return r.stdout.contains('OPEN');
   }
 
+  /// 重启服务器（断开前发送，返回后连接即失效）
+  Future<void> rebootServer() async {
+    final r = await ssh.run(
+      _cmd('reboot'),
+      timeout: const Duration(seconds: 15),
+    );
+    if (!r.ok) {
+      throw SshException(
+        r.stderr.trim().isEmpty ? L10n.t('执行失败：{err}', {'err': 'reboot'}) : r.stderr.trim(),
+      );
+    }
+  }
+
+  /// 强制关机（poweroff）
+  Future<void> shutdownServer() async {
+    final r = await ssh.run(
+      _cmd('poweroff'),
+      timeout: const Duration(seconds: 15),
+    );
+    if (!r.ok) {
+      throw SshException(
+        r.stderr.trim().isEmpty ? L10n.t('执行失败：{err}', {'err': 'poweroff'}) : r.stderr.trim(),
+      );
+    }
+  }
+
   /// 拉取最近日志
   Future<String> logsOf(ServiceConfig s, {int lines = 200}) async {
     final CmdResult r;

@@ -83,6 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
                   sliver: SliverToBoxAdapter(child: _MetricsCard(m: app.metrics!)),
                 ),
+              if (app.connected)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+                  sliver: SliverToBoxAdapter(child: _serverPowerCard(app)),
+                ),
               if (app.connError != null &&
                   (app.connState == ConnState.error || app.connState == ConnState.disconnected))
                 SliverPadding(
@@ -303,6 +308,118 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  /// 服务器电源控制（重启 / 强制关机）
+  Widget _serverPowerCard(AppState app) {
+    return GlassCard(
+      padding: EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Expanded(
+            child: FrostedButton(
+              label: L10n.t('重启服务器'),
+              icon: Icons.restart_alt,
+              color: AppColors.amber,
+              onPressed: () => _confirmServerPower(true),
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: FrostedButton(
+              label: L10n.t('强制关机'),
+              icon: Icons.power_settings_new,
+              color: AppColors.red,
+              onPressed: () => _confirmServerPower(false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmServerPower(bool reboot) async {
+    final app = context.read<AppState>();
+    final cmd = reboot ? 'reboot' : 'poweroff';
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: GlassCard(
+          tint: reboot ? AppColors.amber : AppColors.red,
+          backdropSigma: 36,
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                reboot ? Icons.restart_alt : Icons.power_settings_new,
+                color: reboot ? AppColors.amber : AppColors.red,
+                size: 34,
+              ),
+              SizedBox(height: 12),
+              Text(
+                reboot ? L10n.t('重启服务器') : L10n.t('强制关机'),
+                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700, color: AppColors.text),
+              ),
+              SizedBox(height: 8),
+              Text(
+                reboot
+                    ? L10n.t('将远程执行 {cmd} 命令，服务器将立即重启，SSH 连接会断开。', {'cmd': cmd})
+                    : L10n.t('将远程执行 {cmd} 命令，服务器将立即关机，SSH 连接会断开。', {'cmd': cmd}),
+                style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: FrostedButton(
+                      label: L10n.t('取消'),
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: FrostedButton(
+                      label: L10n.t('确认执行'),
+                      icon: Icons.check,
+                      primary: true,
+                      color: reboot ? AppColors.amber : AppColors.red,
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      if (reboot) {
+        await app.manager.rebootServer();
+      } else {
+        await app.manager.shutdownServer();
+      }
+      app.disconnect();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            reboot ? L10n.t('命令已发送，服务器即将重启') : L10n.t('命令已发送，服务器即将关机'),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.t('执行失败：{err}', {'err': '$e'}))),
+      );
+    }
   }
 }
 
