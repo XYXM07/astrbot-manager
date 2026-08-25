@@ -361,7 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Wrap(
                       spacing: 8,
                       children: [
-                        for (final opt in [0, 30, 60, 120])
+                        for (final opt in [0, 5, 30, 60, 120])
                           _chip(
                             opt == 0
                                 ? L10n.t('关闭')
