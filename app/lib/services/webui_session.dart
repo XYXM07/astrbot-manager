@@ -13,13 +13,33 @@ class WebUiSession extends ChangeNotifier {
   final ServiceConfig service;
   final AppState app;
 
+  /// 直连模式：直接加载外部地址（自定义网址），无需 SSH 隧道
+  final String? directUrl;
+
   WebViewController? controller;
   LocalTunnel? tunnel;
   bool connecting = true;
   String? error;
   String? pageError;
 
-  WebUiSession({required this.id, required this.service, required this.app}) {
+  /// 会话标签：直连模式显示网址主机名，隧道模式显示服务名
+  String get label {
+    final d = directUrl;
+    if (d == null) return service.name;
+    try {
+      final h = Uri.parse(d).host;
+      return h.isEmpty ? L10n.t('自定义网址') : h;
+    } catch (_) {
+      return L10n.t('自定义网址');
+    }
+  }
+
+  WebUiSession({
+    required this.id,
+    required this.service,
+    required this.app,
+    this.directUrl,
+  }) {
     start();
   }
 
@@ -35,6 +55,44 @@ class WebUiSession extends ChangeNotifier {
     error = null;
     pageError = null;
     notifyListeners();
+
+    // 直连模式：无 SSH，直接加载外部网址
+    if (directUrl != null) {
+      try {
+        final c = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(const Color(0xFF0B0E1E))
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onPageStarted: (_) {
+                if (pageError != null) {
+                  pageError = null;
+                  notifyListeners();
+                }
+              },
+              onPageFinished: (_) {
+                connecting = false;
+                notifyListeners();
+              },
+              onWebResourceError: (e) {
+                if (e.isForMainFrame == true) {
+                  pageError = e.description ?? L10n.t('页面加载失败');
+                  notifyListeners();
+                }
+              },
+            ),
+          )
+          ..loadRequest(Uri.parse(directUrl!));
+        tunnel = null;
+        controller = c;
+      } catch (e) {
+        error = L10n.t('无法打开网址：{err}', {'err': '$e'});
+      }
+      connecting = false;
+      notifyListeners();
+      return;
+    }
+
     await tunnel?.close();
     try {
       await app.ssh.connect(cfg);

@@ -29,6 +29,18 @@ class WebUiSessionsPage extends StatelessWidget {
     }
   }
 
+  /// 打开自定义网址会话（直连，无需 SSH 隧道）
+  Future<void> _openCustom(BuildContext context) async {
+    final url = await showDialog<String>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (ctx) => const _CustomUrlDialog(),
+    );
+    if (url != null && url.isNotEmpty && context.mounted) {
+      context.read<AppState>().openCustomWebui(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -74,7 +86,7 @@ class WebUiSessionsPage extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            '${s.service.name}',
+                                            s.label,
                                             style: TextStyle(
                                               fontSize: 12.5,
                                               fontWeight: i == app.webuiActiveIndex
@@ -107,6 +119,11 @@ class WebUiSessionsPage extends StatelessWidget {
                             icon: Icon(Icons.add, size: 22, color: AppColors.text),
                             tooltip: L10n.t('打开 WebUI'),
                             onPressed: () => _openNew(context),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.add_link, size: 21, color: AppColors.text),
+                            tooltip: L10n.t('自定义网址'),
+                            onPressed: () => _openCustom(context),
                           ),
                         ],
                       ),
@@ -220,7 +237,9 @@ class _SessionView extends StatelessWidget {
                 CircularProgressIndicator(color: AppColors.violet),
                 SizedBox(height: 14),
                 Text(
-                  L10n.t('正在通过 SSH 隧道连接 {name}…', {'name': session.service.name}),
+                  session.directUrl != null
+                      ? L10n.t('正在打开 {name}…', {'name': session.label})
+                      : L10n.t('正在通过 SSH 隧道连接 {name}…', {'name': session.service.name}),
                   style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.7)),
                 ),
               ],
@@ -365,6 +384,93 @@ class _ServicePicker extends StatelessWidget {
           ),
           SizedBox(height: 8),
         ],
+      ),
+    );
+  }
+}
+
+/// 自定义网址输入对话框（直连打开，无需 SSH 隧道）
+class _CustomUrlDialog extends StatefulWidget {
+  const _CustomUrlDialog();
+
+  @override
+  State<_CustomUrlDialog> createState() => _CustomUrlDialogState();
+}
+
+class _CustomUrlDialogState extends State<_CustomUrlDialog> {
+  final TextEditingController _url = TextEditingController();
+
+  @override
+  void dispose() {
+    _url.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final u = _url.text.trim();
+    if (u.isEmpty ||
+        !(u.startsWith('http://') || u.startsWith('https://'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.t('请输入要打开的网址（以 http:// 或 https:// 开头）'))),
+      );
+      return;
+    }
+    Navigator.of(context).pop(u);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.symmetric(horizontal: 28),
+      child: GlassCard(
+        tint: AppColors.violet,
+        backdropSigma: 36,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              L10n.t('自定义网址'),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+            ),
+            SizedBox(height: 6),
+            Text(
+              L10n.t('直接打开任意网址（无需 SSH 隧道）'),
+              style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.55)),
+            ),
+            SizedBox(height: 14),
+            GlassTextField(
+              controller: _url,
+              label: L10n.t('网址'),
+              icon: Icons.link,
+              keyboard: TextInputType.url,
+              hint: 'https://…',
+            ),
+            SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: FrostedButton(
+                    label: L10n.t('取消'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: FrostedButton(
+                    label: L10n.t('打开'),
+                    icon: Icons.open_in_new,
+                    primary: true,
+                    onPressed: _submit,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

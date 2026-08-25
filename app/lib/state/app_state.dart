@@ -181,7 +181,7 @@ class AppState extends ChangeNotifier {
   final List<WebUiSession> webuiSessions = [];
   int webuiActiveIndex = 0;
 
-  /// 打开一个新的 WebUI 会话并激活
+  /// 打开一个新 WebUI 会话并激活
   WebUiSession openWebuiSession(ServiceConfig s) {
     final sess = WebUiSession(
       id: 'web_${DateTime.now().millisecondsSinceEpoch}',
@@ -192,6 +192,33 @@ class AppState extends ChangeNotifier {
     webuiActiveIndex = webuiSessions.length - 1;
     notifyListeners();
     return sess;
+  }
+
+  /// 打开自定义网址会话（直连，无需 SSH 隧道）；已存在相同网址则复用
+  void openCustomWebui(String url) {
+    final cfg = config;
+    if (cfg == null) return;
+    final u = url.trim();
+    if (u.isEmpty) return;
+    final existing = webuiSessions.indexWhere((s) => s.directUrl == u);
+    if (existing >= 0) {
+      webuiActiveIndex = existing;
+      notifyListeners();
+      return;
+    }
+    final svc = cfg.services.firstWhere(
+      (s) => s.id == 'astrbot',
+      orElse: () => cfg.services.first,
+    );
+    final sess = WebUiSession(
+      id: 'web_${DateTime.now().millisecondsSinceEpoch}',
+      service: svc,
+      app: this,
+      directUrl: u,
+    );
+    webuiSessions.add(sess);
+    webuiActiveIndex = webuiSessions.length - 1;
+    notifyListeners();
   }
 
   void selectWebuiSession(int index) {

@@ -85,6 +85,14 @@ class L10n {
     '通过 SSH 隧道安全访问 AstrBot / NapCat 后台，\n可同时打开多个会话':
         'Access AstrBot / NapCat panels securely over an SSH tunnel.\nMultiple sessions can stay open at once',
     '打开 WebUI': 'Open WebUI',
+    '自定义网址': 'Custom URL',
+    '网址': 'URL',
+    '打开': 'Open',
+    '直接打开任意网址（无需 SSH 隧道）': 'Open any URL directly (no SSH tunnel needed)',
+    '请输入要打开的网址（以 http:// 或 https:// 开头）':
+        'Enter the URL to open (must start with http:// or https://)',
+    '正在打开 {name}…': 'Opening {name}…',
+    '无法打开网址：{err}': 'Could not open URL: {err}',
     '无法打开 {name} 的 WebUI\n\n{err}': "Could not open {name}'s WebUI\n\n{err}",
     '关闭会话': 'Close session',
     '正在通过 SSH 隧道连接 {name}…': 'Connecting to {name} over the SSH tunnel…',
