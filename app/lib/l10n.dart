@@ -60,6 +60,10 @@ class L10n {
     '重启': 'Restart',
     '日志': 'Logs',
     '刷新状态': 'Refresh status',
+    '服务器资源': 'Server resources',
+    'CPU': 'CPU',
+    '内存': 'Memory',
+    '磁盘': 'Disk',
     '编辑服务': 'Edit service',
     '删除服务': 'Delete service',
     '确认重启 {name}？': 'Restart {name}?',
@@ -173,6 +177,7 @@ class L10n {
     '无法查询 Compose 服务': 'Could not query Compose service',
     '重启失败（退出码 {code}）': 'Restart failed (exit code {code})',
     '无法获取日志': 'Could not fetch logs',
+    '无法获取服务器资源': 'Could not get server resources',
     '命令执行超时': 'Command timed out',
     '连接被拒绝：请检查 IP/端口，以及阿里云安全组是否放行 SSH 端口':
         'Connection refused: check the IP/port and whether the cloud security group allows the SSH port',

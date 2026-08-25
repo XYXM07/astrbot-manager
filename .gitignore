@@ -22,3 +22,6 @@ Thumbs.db
 # å·¥å…·ä¾èµ–
 tools/node_modules/
 tools/npm-cache/
+
+# Ñ¹Ëõ°ü±¸·İ
+*.rar

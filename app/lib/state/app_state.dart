@@ -28,6 +28,9 @@ class AppState extends ChangeNotifier {
   ConnState connState = ConnState.disconnected;
   String? connError;
   String? serverInfo;
+
+  /// 服务器资源占用（CPU/内存/磁盘），刷新时更新
+  ServerMetrics? metrics;
   final Map<String, ServiceStatus> statuses = {};
   final Set<String> busy = {};
   bool refreshing = false;
@@ -58,6 +61,7 @@ class AppState extends ChangeNotifier {
     connState = ConnState.connecting;
     connError = null;
     serverInfo = null;
+    metrics = null;
     statuses.clear();
     notifyListeners();
     try {
@@ -98,6 +102,11 @@ class AppState extends ChangeNotifier {
         } catch (_) {}
       }
       await Future.wait(cfg.services.map(refreshOne));
+      // 资源监控（失败不影响整体刷新，保留上次数据）
+      try {
+        final m = await manager.metricsOf();
+        metrics = m;
+      } catch (_) {}
     } catch (e) {
       connError = e.toString();
       connState = ConnState.error;
@@ -204,6 +213,7 @@ class AppState extends ChangeNotifier {
   void disconnect() {
     ssh.disconnect();
     connState = ConnState.disconnected;
+    metrics = null;
     notifyListeners();
   }
 }

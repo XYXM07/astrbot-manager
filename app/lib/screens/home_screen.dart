@@ -78,6 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
                 sliver: SliverToBoxAdapter(child: _header(app, cfg)),
               ),
+              if (app.metrics != null)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+                  sliver: SliverToBoxAdapter(child: _MetricsCard(m: app.metrics!)),
+                ),
               if (app.connError != null &&
                   (app.connState == ConnState.error || app.connState == ConnState.disconnected))
                 SliverPadding(
@@ -294,6 +299,120 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             L10n.t('添加服务'),
             style: TextStyle(fontSize: 14, color: AppColors.text.withOpacity(0.6)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 服务器资源卡片（CPU / 内存 / 磁盘）
+class _MetricsCard extends StatelessWidget {
+  final ServerMetrics m;
+  const _MetricsCard({super.key, required this.m});
+
+  String _g(int? kb) =>
+      kb == null ? '-' : '${(kb / 1048576).toStringAsFixed(1)}G';
+
+  @override
+  Widget build(BuildContext context) {
+    final memUsed = m.memUsedKB;
+    final memPct = (memUsed != null && m.memTotalKB != null && m.memTotalKB! > 0)
+        ? (memUsed / m.memTotalKB! * 100).clamp(0.0, 100.0).toDouble()
+        : 0.0;
+    final diskPct = (m.diskUsedKB != null &&
+            m.diskTotalKB != null &&
+            m.diskTotalKB! > 0)
+        ? (m.diskUsedKB! / m.diskTotalKB! * 100).clamp(0.0, 100.0).toDouble()
+        : 0.0;
+    return GlassCard(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.speed, size: 17, color: AppColors.violet),
+              SizedBox(width: 7),
+              Text(
+                L10n.t('服务器资源'),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _row(
+            L10n.t('CPU'),
+            m.cpuPercent == null ? '-' : '${m.cpuPercent!.round()}%',
+            m.cpuPercent ?? 0,
+            AppColors.violet,
+          ),
+          _row(
+            L10n.t('内存'),
+            '${_g(memUsed)} / ${_g(m.memTotalKB)}',
+            memPct,
+            AppColors.cyan,
+          ),
+          _row(
+            L10n.t('磁盘'),
+            '${_g(m.diskUsedKB)} / ${_g(m.diskTotalKB)}',
+            diskPct,
+            AppColors.green,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(String label, String value, double percent, Color color) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: AppColors.text.withOpacity(0.6),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                color: AppColors.text.withOpacity(0.10),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: (percent / 100).clamp(0.0, 1.0).toDouble(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3),
+                    color: color,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 10),
+          SizedBox(
+            width: 86,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.text.withOpacity(0.75),
+              ),
+            ),
           ),
         ],
       ),

@@ -38,6 +38,30 @@ class ServiceStatus {
       ServiceStatus(state: 'error', message: msg);
 }
 
+/// 服务器资源占用（CPU / 内存 / 磁盘，一次 SSH 命令采集）
+class ServerMetrics {
+  final double? cpuPercent;
+  final int? memTotalKB;
+  final int? memAvailKB;
+  final int? diskTotalKB;
+  final int? diskUsedKB;
+
+  const ServerMetrics({
+    this.cpuPercent,
+    this.memTotalKB,
+    this.memAvailKB,
+    this.diskTotalKB,
+    this.diskUsedKB,
+  });
+
+  int? get memUsedKB {
+    final t = memTotalKB;
+    final a = memAvailKB;
+    if (t == null || a == null) return null;
+    return t - a;
+  }
+}
+
 /// 服务器端管理操作：状态查询 / 远程重启 / 日志拉取
 class ManagerService {
   final SshService ssh;
@@ -187,6 +211,67 @@ class ManagerService {
         r.stderr.trim().isEmpty ? L10n.t('重启失败（退出码 {code}）', {'code': '${r.exitCode}'}) : r.stderr.trim(),
       );
     }
+  }
+
+  /// 采集服务器资源占用（CPU / 内存 / 磁盘）
+  Future<ServerMetrics> metricsOf() async {
+    final r = await ssh.run(
+      _cmd(
+        'top -bn1 | head -5; echo ===; '
+        'grep -E "MemTotal|MemFree|MemAvailable" /proc/meminfo; '
+        'echo ===; df -P / | tail -1',
+      ),
+      timeout: const Duration(seconds: 15),
+    );
+    if (!r.ok) {
+      throw SshException(
+        r.stderr.trim().isEmpty ? L10n.t('无法获取服务器资源') : r.stderr.trim(),
+      );
+    }
+    final parts = r.stdout.split('===');
+    // CPU：top 输出中的空闲率 -> 使用率
+    double? cpu;
+    if (parts.isNotEmpty) {
+      final m = RegExp(r'([\d.]+)\s*id').firstMatch(parts[0]);
+      if (m != null) {
+        final idle = double.tryParse(m.group(1)!);
+        if (idle != null) cpu = (100 - idle).clamp(0.0, 100.0);
+      }
+    }
+    // 内存：/proc/meminfo
+    int? memTotal, memAvail;
+    if (parts.length > 1) {
+      for (final line in parts[1].split('\n')) {
+        final mm =
+            RegExp(r'^Mem(Total|Free|Available):\s+(\d+)').firstMatch(line.trim());
+        if (mm == null) continue;
+        final v = int.tryParse(mm.group(2)!);
+        switch (mm.group(1)) {
+          case 'Total':
+            memTotal = v;
+          case 'Free':
+            memAvail ??= v;
+          case 'Available':
+            memAvail = v;
+        }
+      }
+    }
+    // 磁盘：df -P /（1024-blocks / Used / Available / Capacity）
+    int? diskTotal, diskUsed;
+    if (parts.length > 2) {
+      final f = parts[2].trim().split('\n').last.trim().split(RegExp(r'\s+'));
+      if (f.length >= 4) {
+        diskTotal = int.tryParse(f[1]);
+        diskUsed = int.tryParse(f[2]);
+      }
+    }
+    return ServerMetrics(
+      cpuPercent: cpu,
+      memTotalKB: memTotal,
+      memAvailKB: memAvail,
+      diskTotalKB: diskTotal,
+      diskUsedKB: diskUsed,
+    );
   }
 
   /// 检测服务器上某端口是否在监听（用于 WebUI 预检）
