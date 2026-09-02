@@ -39,6 +39,9 @@ class AppSettings {
   /// AI 分析模型名
   String apiModel;
 
+  /// 启动时自动检查更新（GitHub Releases）
+  bool autoCheckUpdate;
+
   AppSettings({
     this.blurEnabled = false,
     this.blurSigma = 22,
@@ -53,6 +56,7 @@ class AppSettings {
     this.apiBaseUrl = 'https://api.deepseek.com/v1',
     this.apiKey = '',
     this.apiModel = 'deepseek-chat',
+    this.autoCheckUpdate = true,
   });
 
   AppSettings copyWith({
@@ -69,6 +73,7 @@ class AppSettings {
     String? apiBaseUrl,
     String? apiKey,
     String? apiModel,
+    bool? autoCheckUpdate,
   }) {
     return AppSettings(
       blurEnabled: blurEnabled ?? this.blurEnabled,
@@ -84,6 +89,7 @@ class AppSettings {
       apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
       apiKey: apiKey ?? this.apiKey,
       apiModel: apiModel ?? this.apiModel,
+      autoCheckUpdate: autoCheckUpdate ?? this.autoCheckUpdate,
     );
   }
 
@@ -102,6 +108,7 @@ class AppSettings {
       apiBaseUrl: j['apiBaseUrl'] as String? ?? 'https://api.deepseek.com/v1',
       apiKey: j['apiKey'] as String? ?? '',
       apiModel: j['apiModel'] as String? ?? 'deepseek-chat',
+      autoCheckUpdate: j['autoCheckUpdate'] as bool? ?? true,
     );
   }
 
@@ -119,5 +126,6 @@ class AppSettings {
         'apiBaseUrl': apiBaseUrl,
         'apiKey': apiKey,
         'apiModel': apiModel,
+        'autoCheckUpdate': autoCheckUpdate,
       };
 }

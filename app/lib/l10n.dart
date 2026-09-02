@@ -253,6 +253,15 @@ class L10n {
     '已复制到剪贴板': 'Copied to clipboard',
     '关于': 'About',
     '作者：星月晓梦_07': 'Author: 星月晓梦_07',
+    '检查更新': 'Check for updates',
+    '启动时自动检查更新': 'Check for updates on startup',
+    '有新版本时弹窗提示': 'Show a prompt when a new version is available',
+    '发现新版本 v{v}': 'New version v{v} is available',
+    '当前版本 v{v}': 'Current version v{v}',
+    '已是最新版本': 'You are up to date',
+    '检查更新失败：{err}': 'Update check failed: {err}',
+    '下载更新': 'Download update',
+    '稍后': 'Later',
     '通过 SSH 直连远程管理服务器上的 AstrBot 与 NapCat。连接凭据仅加密保存在本机，所有操作经 SSH 加密传输。':
         'Remotely manage AstrBot and NapCat on your server over a direct SSH connection. Credentials are stored encrypted on this device only; all operations go over encrypted SSH.',
     // ── 服务/SSH 错误 ──

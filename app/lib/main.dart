@@ -7,6 +7,7 @@ import 'screens/connection_screen.dart';
 import 'screens/main_shell.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
+import 'widgets/update_dialog.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,10 @@ class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 启动后延迟检查更新（不阻塞界面）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      performUpdateCheck(context, auto: true);
+    });
   }
 
   @override

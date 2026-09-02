@@ -11,8 +11,10 @@ import '../services/ai_analyze.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../utils/image_utils.dart';
+import '../version.dart';
 import '../widgets/background.dart';
 import '../widgets/glass.dart';
+import '../widgets/update_dialog.dart';
 
 /// APP 设置页
 class SettingsScreen extends StatefulWidget {
@@ -550,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text('astrbot助手', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
                         Spacer(),
                         Text(
-                          'v1.1.0',
+                          'v$appVersion',
                           style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.55)),
                         ),
                       ],
@@ -572,6 +574,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         height: 1.6,
                         color: AppColors.text.withOpacity(0.55),
                       ),
+                    ),
+                    SizedBox(height: 8),
+                    _switchRow(
+                      title: L10n.t('启动时自动检查更新'),
+                      subtitle: L10n.t('有新版本时弹窗提示'),
+                      value: s.autoCheckUpdate,
+                      onChanged: (v) => app.updateSettings(
+                        s.copyWith(autoCheckUpdate: v),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    FrostedButton(
+                      label: L10n.t('检查更新'),
+                      icon: Icons.system_update_alt,
+                      onPressed: () => performUpdateCheck(context),
                     ),
                   ],
                 ),
