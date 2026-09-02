@@ -247,38 +247,57 @@ class AppState extends ChangeNotifier {
   }
 
   /// App 回到前台：检测 SSH 假死并自动重连，恢复 WebUI 会话。
-  /// Android 切后台后系统会冻结进程/休眠网络，SSH 长连接经常假死，
-  /// 这里统一做"探测 → 断线重建 → 隧道会话重启 → 页面重载"。
+  /// Android 切后台后系统会冻结进程/休眠网络，SSH 长连接经常假死；
+  /// 若后台期间恰逢自动刷新挂起，恢复时先丢弃旧连接让挂起请求尽快失败收敛，
+  /// 再重连并重建全部 WebUI 隧道会话。
   Future<void> onAppResumed() async {
     final cfg = config;
-    if (cfg == null || loading || refreshing) return;
+    if (cfg == null || loading) return;
+
     if (!ssh.isConnected) {
-      // 连接已断：整体重连 + 重建 WebUI 隧道会话
+      // 后台期间可能正卡在旧连接的请求上：断开使其立刻报错结束
+      if (refreshing) ssh.disconnect();
+      await _waitRefreshIdle();
       await refreshAll();
-      for (final s in webuiSessions) {
-        unawaited(s.start());
-      }
+      _restartWebuiSessions();
       return;
     }
     final alive = await ssh.ping();
     if (!alive) {
-      // 假死连接：丢弃旧客户端后重连
+      // 假死连接：丢弃旧客户端，等挂起请求结束后整体重连
       ssh.disconnect();
+      await _waitRefreshIdle();
       connState = ConnState.disconnected;
       metrics = null;
       notifyListeners();
       await refreshAll();
-      for (final s in webuiSessions) {
-        unawaited(s.start());
-      }
+      _restartWebuiSessions();
     } else {
-      // 连接正常：WebView 页面可能已被系统销毁，重载当前页
+      // 连接正常：让 WebView 先醒过来，再恢复页面
+      await Future<void>.delayed(const Duration(milliseconds: 400));
       for (final s in webuiSessions) {
-        final c = s.controller;
-        if (c != null && s.error == null) {
-          unawaited(c.reload());
+        if (s.error != null) {
+          // 隧道会话自身出错：整体重建
+          unawaited(s.start());
+        } else if (s.controller != null) {
+          // 页面可能被系统销毁或停留在错误页：重载
+          unawaited(s.controller!.reload());
         }
       }
+    }
+  }
+
+  /// 等待挂起的刷新结束（上限约 6 秒）
+  Future<void> _waitRefreshIdle() async {
+    for (var i = 0; i < 40 && refreshing; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+  }
+
+  /// 重建全部 WebUI 隧道会话（连接已重建立后调用）
+  void _restartWebuiSessions() {
+    for (final s in webuiSessions) {
+      unawaited(s.start());
     }
   }
 }
