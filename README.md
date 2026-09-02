@@ -9,15 +9,20 @@
 
 - 📡 **SSH 直连**：App 直接通过 SSH 执行命令，支持密码 / 私钥登录
 - 🟢 **状态监控**：运行中 / 已停止 / 重启中，运行时长、退出码、镜像信息
+- 📊 **服务器资源监控**：CPU / 内存 / 磁盘占用一目了然
 - 🔄 **一键远程重启**：支持 `docker restart`、`docker compose restart`、`systemctl restart` 三种方式
-- 📜 **实时日志**：终端风格日志面板，自动刷新、一键复制、长按选词
-- 🌐 **APP 内打开 WebUI**：通过 SSH 隧道安全访问 AstrBot / NapCat 网页后台，**无需在公网开放端口**
+- ⚡ **服务器电源控制**：重启服务器 / 强制关机（带强确认）
+- 📜 **实时日志**：终端风格日志面板，自动刷新（最短 5 秒）、一键复制、长按选词
+- 🤖 **AI 日志分析**：接入 OpenAI 兼容大模型（DeepSeek / 通义 / Moonshot…），一键或选中分析报错原因
+- 🌐 **APP 内打开 WebUI**：通过 SSH 隧道安全访问网页后台，**无需在公网开放端口**；也支持直接打开自定义网址
+- 📁 **文件管理**：SFTP 浏览服务器文件，上传 / 下载 / 分享 / 复制 / 移动 / 重命名 / 新建文件夹 / 文本预览
 - 🔍 **容器自动检测**：一键列出服务器上的所有容器，自动填入容器名
 - ➕ **任意服务**：除了默认的 AstrBot / NapCat，可自由添加其他容器 / Compose / systemd 服务
 - 🎨 **毛玻璃 UI**：高斯模糊卡片 + 渐变背景，支持浅色 / 深色模式
 - 🌐 **中英双语**：设置内一键切换界面语言
 - ⚡ **刷新率设置**：按应用锁定 30 / 60 / 120 帧或无限制
 - 🖼️ **自定义背景与界面图标**：本地图片一键更换
+- 🔄 **自动更新检测**：启动时自动检查 GitHub Releases，有新版本弹窗提示
 - 🔐 **凭据安全**：连接信息使用 Android Keystore 加密存储在本机
 
 ## 📱 安装
@@ -63,7 +68,8 @@ flutter build apk --release
 app/
 ├── android/                         # Android 工程（已含必要补丁）
 ├── lib/
-│   ├── main.dart                    # 入口与语言/主题同步
+│   ├── main.dart                    # 入口：语言/主题同步、生命周期监听（后台自动重连）
+│   ├── version.dart                 # 应用版本号（唯一来源）
 │   ├── l10n.dart                    # 中英双语（轻量查表实现）
 │   ├── theme.dart                   # 主题与配色（深浅色自适应）
 │   ├── models/
@@ -71,15 +77,19 @@ app/
 │   │   └── settings.dart            # 应用设置
 │   ├── services/
 │   │   ├── ssh.dart                 # SSH 连接与端口隧道（dartssh2）
-│   │   ├── manager.dart             # 状态/重启/日志命令
+│   │   ├── manager.dart             # 状态/重启/日志/电源命令
+│   │   ├── sftp_manager.dart        # SFTP 远程文件操作
+│   │   ├── ai_analyze.dart          # AI 日志分析（OpenAI 兼容）
+│   │   ├── update_check.dart        # GitHub Releases 更新检测
 │   │   ├── storage.dart             # 安全存储（Keystore）
-│   │   ├── webui_session.dart       # WebUI 会话（SSH 隧道）
+│   │   ├── webui_session.dart       # WebUI 会话（SSH 隧道/自定义网址）
 │   │   └── frame_rate.dart          # 帧率控制（MethodChannel）
-│   ├── state/app_state.dart         # 全局状态
+│   ├── state/app_state.dart         # 全局状态（含回到前台自动恢复）
 │   ├── screens/
 │   │   ├── connection_screen.dart   # 连接配置页
-│   │   ├── home_screen.dart         # 仪表盘
-│   │   ├── logs_screen.dart         # 日志页
+│   │   ├── home_screen.dart         # 仪表盘（资源监控/电源控制）
+│   │   ├── logs_screen.dart         # 日志页（AI 分析）
+│   │   ├── files_screen.dart        # SFTP 文件管理
 │   │   ├── webui_page.dart          # WebUI 多会话页
 │   │   ├── settings_screen.dart     # 设置页
 │   │   └── main_shell.dart          # 底部导航框架
@@ -87,9 +97,11 @@ app/
 │       ├── glass.dart               # 毛玻璃组件（卡片/按钮/输入框）
 │       ├── background.dart          # 渐变背景
 │       ├── service_editor.dart      # 服务编辑对话框
-│       └── service_icon.dart        # 服务图标
+│       ├── service_icon.dart        # 服务图标
+│       └── update_dialog.dart       # 更新提示弹窗
 └── pubspec.yaml
 ```
+
 
 ## 📦 技术栈
 
