@@ -197,6 +197,31 @@ if ($userIcon -ne $null) {
   if ($LASTEXITCODE -ne 0) { throw 'icon generation failed' }
 }
 
+Write-Output '=== patch release signing (stable keystore) ==='
+# Use a dedicated release keystore when present (keeps APK signature stable
+# across local builds and CI); otherwise fall back to the debug key.
+$passFile = "$t\keystore.pass"
+$ksFile = "$t\release-keystore.jks"
+if ((Test-Path $passFile) -and (Test-Path $ksFile)) {
+  $env:KEYSTORE_PATH = $ksFile
+  $env:KEYSTORE_PASS = [System.IO.File]::ReadAllText($passFile).Trim()
+  $g = "$proj\android\app\build.gradle.kts"
+  $gc = [System.IO.File]::ReadAllText($g)
+  $anchor = '            signingConfig = signingConfigs.getByName("debug")'
+  if ($gc.Contains($anchor)) {
+    $new = '            signingConfig = if (System.getenv("KEYSTORE_PATH") != null) {' + "`r`n" + '                signingConfigs.create("release") {' + "`r`n" + '                    storeFile = file(System.getenv("KEYSTORE_PATH"))' + "`r`n" + '                    storePassword = System.getenv("KEYSTORE_PASS")' + "`r`n" + '                    keyAlias = "astrbot"' + "`r`n" + '                    keyPassword = System.getenv("KEYSTORE_PASS")' + "`r`n" + '                }' + "`r`n" + '            } else {' + "`r`n" + '                signingConfigs.getByName("debug")' + "`r`n" + '            }'
+    $gc = $gc.Replace($anchor, $new)
+    [System.IO.File]::WriteAllText($g, $gc, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Output 'release signing configured (astrbot keystore)'
+  } else {
+    Write-Output 'warning: signing anchor not found, keep template config'
+  }
+} else {
+  Remove-Item Env:KEYSTORE_PATH -ErrorAction SilentlyContinue
+  Remove-Item Env:KEYSTORE_PASS -ErrorAction SilentlyContinue
+  Write-Output 'keystore missing, keep debug signing'
+}
+
 Write-Output '=== pub get ==='
 Push-Location $proj
 Run-Flutter @('pub', 'get')

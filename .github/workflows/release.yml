@@ -34,7 +34,20 @@ jobs:
             android/gradle/wrapper/gradle-wrapper.properties
         working-directory: app
 
+      - name: Configure release keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/release-keystore.jks
+          fi
+        working-directory: app
+
       - name: Build APK
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/app/android/release-keystore.jks
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
           flutter pub get
           flutter build apk --release
