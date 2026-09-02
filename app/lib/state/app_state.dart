@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/config.dart';
@@ -242,5 +244,41 @@ class AppState extends ChangeNotifier {
     connState = ConnState.disconnected;
     metrics = null;
     notifyListeners();
+  }
+
+  /// App 回到前台：检测 SSH 假死并自动重连，恢复 WebUI 会话。
+  /// Android 切后台后系统会冻结进程/休眠网络，SSH 长连接经常假死，
+  /// 这里统一做"探测 → 断线重建 → 隧道会话重启 → 页面重载"。
+  Future<void> onAppResumed() async {
+    final cfg = config;
+    if (cfg == null || loading || refreshing) return;
+    if (!ssh.isConnected) {
+      // 连接已断：整体重连 + 重建 WebUI 隧道会话
+      await refreshAll();
+      for (final s in webuiSessions) {
+        unawaited(s.start());
+      }
+      return;
+    }
+    final alive = await ssh.ping();
+    if (!alive) {
+      // 假死连接：丢弃旧客户端后重连
+      ssh.disconnect();
+      connState = ConnState.disconnected;
+      metrics = null;
+      notifyListeners();
+      await refreshAll();
+      for (final s in webuiSessions) {
+        unawaited(s.start());
+      }
+    } else {
+      // 连接正常：WebView 页面可能已被系统销毁，重载当前页
+      for (final s in webuiSessions) {
+        final c = s.controller;
+        if (c != null && s.error == null) {
+          unawaited(c.reload());
+        }
+      }
+    }
   }
 }

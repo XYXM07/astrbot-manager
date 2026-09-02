@@ -244,6 +244,18 @@ class SshService {
     }
   }
 
+  /// 探测当前 SSH 连接是否仍可用（用于切后台回来后的假死检测）
+  Future<bool> ping() async {
+    final client = _client;
+    if (client == null || client.isClosed) return false;
+    try {
+      final r = await run('echo pong', timeout: const Duration(seconds: 6));
+      return r.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String _friendly(Object e) {
     final t = e.toString().toLowerCase();
     if (t.contains('refused')) {
