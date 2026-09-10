@@ -154,4 +154,46 @@ class WebUiSession extends ChangeNotifier {
     await tunnel?.close();
     tunnel = null;
   }
+
+  /// 仅重建 SSH 隧道，保留当前 WebView 页面。
+  /// 本机端口固定为 WebUI 端口，页面里的 WebSocket 会自动接到新隧道，
+  /// 因此无需重载页面（重载会丢失 NapCat 等后台的登录态）。
+  Future<void> restartTunnel() async {
+    if (directUrl != null) return; // 直连模式没有隧道
+    final cfg = app.config;
+    if (cfg == null) return;
+    if (tunnel == null) {
+      // 本来就没有隧道（例如上次连接失败）：整体重建
+      await start();
+      return;
+    }
+    try {
+      await tunnel?.close();
+      tunnel = null;
+      await app.ssh.connect(cfg);
+      final t = await app.ssh.openTunnel(
+        '127.0.0.1',
+        service.webuiPort,
+        preferredLocalPort: service.webuiPort,
+      );
+      tunnel = t;
+      error = null;
+      notifyListeners();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
+  }
+
+  /// 重新加载当前页面（页面本身加载失败时使用）
+  Future<void> reloadPage() async {
+    final c = controller;
+    if (c == null) {
+      await start();
+      return;
+    }
+    pageError = null;
+    notifyListeners();
+    await c.reload();
+  }
 }

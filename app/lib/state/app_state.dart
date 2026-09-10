@@ -259,7 +259,7 @@ class AppState extends ChangeNotifier {
       if (refreshing) ssh.disconnect();
       await _waitRefreshIdle();
       await refreshAll();
-      _restartWebuiSessions();
+      await _restoreWebuiSessions();
       return;
     }
     final alive = await ssh.ping();
@@ -271,17 +271,16 @@ class AppState extends ChangeNotifier {
       metrics = null;
       notifyListeners();
       await refreshAll();
-      _restartWebuiSessions();
+      await _restoreWebuiSessions();
     } else {
-      // 连接正常：让 WebView 先醒过来，再恢复页面
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      // 连接仍正常：绝不主动重载页面（重载会丢失 NapCat 等后台的登录态），
+      // 只修复确实处于错误状态的会话
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       for (final s in webuiSessions) {
         if (s.error != null) {
-          // 隧道会话自身出错：整体重建
           unawaited(s.start());
-        } else if (s.controller != null) {
-          // 页面可能被系统销毁或停留在错误页：重载
-          unawaited(s.controller!.reload());
+        } else if (s.pageError != null) {
+          unawaited(s.reloadPage());
         }
       }
     }
@@ -294,10 +293,18 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// 重建全部 WebUI 隧道会话（连接已重建立后调用）
-  void _restartWebuiSessions() {
+  /// 连接重建后恢复 WebUI 会话：优先只重建隧道并保留页面（保住登录态），
+  /// 仅在会话本身出错时整体重建，页面加载失败时才重载。
+  Future<void> _restoreWebuiSessions() async {
     for (final s in webuiSessions) {
-      unawaited(s.start());
+      if (s.error != null) {
+        await s.start();
+        continue;
+      }
+      await s.restartTunnel();
+      if (s.pageError != null) {
+        await s.reloadPage();
+      }
     }
   }
 }

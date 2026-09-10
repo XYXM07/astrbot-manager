@@ -142,6 +142,7 @@ class L10n {
         'Access AstrBot / NapCat panels securely over an SSH tunnel.\nMultiple sessions can stay open at once',
     '打开 WebUI': 'Open WebUI',
     '自定义网址': 'Custom URL',
+    '重新加载页面': 'Reload page',
     '网址': 'URL',
     '打开': 'Open',
     '直接打开任意网址（无需 SSH 隧道）': 'Open any URL directly (no SSH tunnel needed)',

@@ -121,6 +121,16 @@ class WebUiSessionsPage extends StatelessWidget {
                             onPressed: () => _openNew(context),
                           ),
                           IconButton(
+                            icon: Icon(Icons.refresh, size: 20, color: AppColors.text),
+                            tooltip: L10n.t('重新加载页面'),
+                            onPressed: () {
+                              if (app.webuiActiveIndex >= 0 &&
+                                  app.webuiActiveIndex < sessions.length) {
+                                sessions[app.webuiActiveIndex].reloadPage();
+                              }
+                            },
+                          ),
+                          IconButton(
                             icon: Icon(Icons.add_link, size: 21, color: AppColors.text),
                             tooltip: L10n.t('自定义网址'),
                             onPressed: () => _openCustom(context),
