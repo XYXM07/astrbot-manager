@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -307,7 +308,12 @@ class _FilesScreenState extends State<FilesScreen> {
   Future<void> _preview(RemoteFile f) async {
     try {
       final bytes = await _mgr!.readBytes(f.path, length: 64 * 1024);
-      final text = String.fromCharCodes(bytes);
+      // 按 UTF-8 解码（否则中文等多字节字符会乱码）
+      final raw = utf8.decode(bytes, allowMalformed: true);
+      final broken = '\uFFFD'.allMatches(raw).length;
+      final text = broken > 3
+          ? '${L10n.t('（该文件可能不是 UTF-8 编码，部分字符可能显示异常）')}\n\n$raw'
+          : raw;
       if (!mounted) return;
       await showDialog<void>(
         context: context,

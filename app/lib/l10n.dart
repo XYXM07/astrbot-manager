@@ -53,6 +53,8 @@ class L10n {
     '粘贴完成': 'Paste completed',
     '粘贴完成，{n} 项失败': 'Paste completed, {n} items failed',
     '文本预览': 'Text preview',
+    '（该文件可能不是 UTF-8 编码，部分字符可能显示异常）':
+        '(This file may not be UTF-8 encoded, so some characters may look wrong)',
     '下载': 'Download',
     '下载并分享': 'Download & share',
     '文件过大，无法上传（超过 64MB）：{name}':
