@@ -113,9 +113,16 @@ class WebUiSession extends ChangeNotifier {
         preferredLocalPort: service.webuiPort,
       );
       final rawPath = service.webuiPath.trim();
-      final urlPath = rawPath.isEmpty
+      var urlPath = rawPath.isEmpty
           ? '/'
           : (rawPath.startsWith('/') ? rawPath : '/$rawPath');
+      // 配置了令牌则自动附加，实现免登录打开（如 NapCat 的 ?token=xxx）
+      final token = service.webuiToken.trim();
+      if (token.isNotEmpty && !urlPath.contains('token=')) {
+        urlPath += urlPath.contains('?')
+            ? '&token=${Uri.encodeQueryComponent(token)}'
+            : '?token=${Uri.encodeQueryComponent(token)}';
+      }
       final c = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setBackgroundColor(const Color(0xFF0B0E1E))

@@ -41,6 +41,9 @@ class ServiceConfig {
   int webuiPort;
   String webuiPath;
 
+  /// WebUI 访问令牌（自动附加为 ?token=xxx，实现免登录打开）
+  String webuiToken;
+
   /// 内置贴图资源路径（如 assets/services/astrbot.png），自定义服务为 null
   String? imageAsset;
 
@@ -57,6 +60,7 @@ class ServiceConfig {
     this.colorValue = 0xFF8B7CFF,
     this.webuiPort = 6185,
     this.webuiPath = '',
+    this.webuiToken = '',
     this.imageAsset,
     this.imagePath,
   });
@@ -77,6 +81,7 @@ class ServiceConfig {
       colorValue: j['colorValue'] as int? ?? 0xFF8B7CFF,
       webuiPort: j['webuiPort'] as int? ?? 6185,
       webuiPath: j['webuiPath'] as String? ?? '',
+      webuiToken: j['webuiToken'] as String? ?? '',
       imageAsset: j['imageAsset'] as String?,
       imagePath: j['imagePath'] as String?,
     );
@@ -92,6 +97,7 @@ class ServiceConfig {
         'colorValue': colorValue,
         'webuiPort': webuiPort,
         'webuiPath': webuiPath,
+        'webuiToken': webuiToken,
         'imageAsset': imageAsset,
         'imagePath': imagePath,
       };

@@ -694,6 +694,28 @@ class _ServiceCard extends StatelessWidget {
     );
   }
 
+  /// 设置该服务的 WebUI 令牌（自动附加到打开地址，免登录）
+  Future<void> _editToken(BuildContext context) async {
+    final token = await showDialog<String>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (_) => _TokenDialog(initial: service.webuiToken),
+    );
+    if (token == null) return;
+    service.webuiToken = token.trim();
+    await app.saveService(service);
+    // 已打开的该服务会话按新令牌重建
+    for (final s in app.webuiSessions) {
+      if (s.service.id == service.id && s.directUrl == null) {
+        unawaited(s.start());
+      }
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(L10n.t('已保存'))),
+    );
+  }
+
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -709,6 +731,20 @@ class _ServiceCard extends StatelessWidget {
               onTap: () {
                 Navigator.of(ctx).pop();
                 app.refreshOne(service);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.key, color: AppColors.text),
+              title: Text(L10n.t('设置 WebUI 令牌'), style: TextStyle(color: AppColors.text)),
+              subtitle: Text(
+                service.webuiToken.trim().isEmpty
+                    ? L10n.t('未设置（打开 WebUI 需手动登录）')
+                    : L10n.t('已设置（打开 WebUI 免登录）'),
+                style: TextStyle(fontSize: 11.5, color: AppColors.text.withOpacity(0.5)),
+              ),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _editToken(context);
               },
             ),
             ListTile(
@@ -792,6 +828,119 @@ class _ConfirmRestartDialog extends StatelessWidget {
                     primary: true,
                     color: AppColors.amber,
                     onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// WebUI 令牌设置对话框（默认遮挡显示，可切换明文）
+class _TokenDialog extends StatefulWidget {
+  final String initial;
+  const _TokenDialog({required this.initial});
+
+  @override
+  State<_TokenDialog> createState() => _TokenDialogState();
+}
+
+class _TokenDialogState extends State<_TokenDialog> {
+  late final MaskTextController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = MaskTextController(text: widget.initial);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _toggleMask() {
+    setState(() {
+      _c.maskChar = _c.maskChar.isEmpty ? '•' : '';
+      _c.applyMask();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.symmetric(horizontal: 28),
+      child: GlassCard(
+        tint: AppColors.violet,
+        backdropSigma: 36,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.key, size: 20, color: AppColors.violet),
+                SizedBox(width: 8),
+                Text(
+                  L10n.t('设置 WebUI 令牌'),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              L10n.t('令牌会自动附加到 WebUI 打开地址（?token=xxx），实现免登录打开；NapCat 的令牌可在其配置文件中查看。'),
+              style: TextStyle(fontSize: 11.5, height: 1.5, color: AppColors.text.withOpacity(0.55)),
+            ),
+            SizedBox(height: 14),
+            GlassTextField(
+              controller: _c,
+              label: L10n.t('WebUI 令牌'),
+              icon: Icons.vpn_key,
+              masked: true,
+              suffix: IconButton(
+                icon: Icon(
+                  _c.maskChar.isEmpty ? Icons.visibility : Icons.visibility_off,
+                  size: 19,
+                  color: AppColors.text.withOpacity(0.6),
+                ),
+                onPressed: _toggleMask,
+              ),
+            ),
+            SizedBox(height: 18),
+            Row(
+              children: [
+                if (widget.initial.trim().isNotEmpty) ...[
+                  Expanded(
+                    child: FrostedButton(
+                      label: L10n.t('清除'),
+                      icon: Icons.backspace,
+                      color: AppColors.red,
+                      onPressed: () => Navigator.of(context).pop(''),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: FrostedButton(
+                    label: L10n.t('取消'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: FrostedButton(
+                    label: L10n.t('保存'),
+                    icon: Icons.check,
+                    primary: true,
+                    onPressed: () => Navigator.of(context).pop(_c.text.trim()),
                   ),
                 ),
               ],
