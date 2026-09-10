@@ -110,8 +110,8 @@ class L10n {
     'CPU': 'CPU',
     '内存': 'Memory',
     '磁盘': 'Disk',
-    '设置 WebUI 令牌': 'Set WebUI token',
-    'WebUI 令牌': 'WebUI token',
+    '设置 NapCat 令牌': 'Set NapCat token',
+    'NapCat 令牌': 'NapCat token',
     '未设置（打开 WebUI 需手动登录）': 'Not set (login required)',
     '已设置（打开 WebUI 免登录）': 'Set (opens without login)',
     '令牌会自动附加到 WebUI 打开地址（?token=xxx），实现免登录打开；NapCat 的令牌可在其配置文件中查看。':

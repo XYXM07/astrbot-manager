@@ -716,6 +716,13 @@ class _ServiceCard extends StatelessWidget {
     );
   }
 
+  /// 是否 NapCat 服务（令牌是 NapCat WebUI 专有机制，其他服务不显示该入口）
+  bool get _isNapCat {
+    final t = '${service.id} ${service.target} ${service.name}'.toLowerCase();
+    return t.contains('napcat') ||
+        service.imageAsset == 'assets/services/napcat.png';
+  }
+
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -733,9 +740,10 @@ class _ServiceCard extends StatelessWidget {
                 app.refreshOne(service);
               },
             ),
+            if (_isNapCat)
             ListTile(
               leading: Icon(Icons.key, color: AppColors.text),
-              title: Text(L10n.t('设置 WebUI 令牌'), style: TextStyle(color: AppColors.text)),
+              title: Text(L10n.t('设置 NapCat 令牌'), style: TextStyle(color: AppColors.text)),
               subtitle: Text(
                 service.webuiToken.trim().isEmpty
                     ? L10n.t('未设置（打开 WebUI 需手动登录）')
@@ -889,7 +897,7 @@ class _TokenDialogState extends State<_TokenDialog> {
                 Icon(Icons.key, size: 20, color: AppColors.violet),
                 SizedBox(width: 8),
                 Text(
-                  L10n.t('设置 WebUI 令牌'),
+                  L10n.t('设置 NapCat 令牌'),
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
                 ),
               ],
@@ -902,7 +910,7 @@ class _TokenDialogState extends State<_TokenDialog> {
             SizedBox(height: 14),
             GlassTextField(
               controller: _c,
-              label: L10n.t('WebUI 令牌'),
+              label: L10n.t('NapCat 令牌'),
               icon: Icons.vpn_key,
               masked: true,
               suffix: IconButton(
