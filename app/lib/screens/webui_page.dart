@@ -298,50 +298,9 @@ class _SessionView extends StatelessWidget {
                   ),
                 ),
               ),
-            // 悬浮控制条：后退 / 前进 / 刷新 / 一键退出
-            Positioned(
-              right: 10,
-              bottom: 14,
-              child: Row(
-                children: [
-                  _fab(Icons.arrow_back, () async {
-                    if (await c.canGoBack()) c.goBack();
-                  }),
-                  SizedBox(width: 8),
-                  _fab(Icons.arrow_forward, () async {
-                    if (await c.canGoForward()) c.goForward();
-                  }),
-                  SizedBox(width: 8),
-                  _fab(Icons.refresh, () {
-                    c.reload();
-                  }),
-                  SizedBox(width: 8),
-                  _fab(
-                    Icons.close,
-                    () => app.closeWebuiSession(index),
-                    color: AppColors.red,
-                  ),
-                ],
-              ),
-            ),
           ],
         );
       },
-    );
-  }
-
-  Widget _fab(IconData icon, VoidCallback onTap, {Color? color}) {
-    return Material(
-      color: AppColors.panelStrong,
-      shape: CircleBorder(),
-      child: InkWell(
-        customBorder: CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Icon(icon, size: 19, color: color ?? AppColors.text),
-        ),
-      ),
     );
   }
 }
