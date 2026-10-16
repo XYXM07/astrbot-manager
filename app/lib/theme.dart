@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'widgets/motion.dart';
+
 /// 应用配色（随浅色/深色模式自适应）
 class AppColors {
   /// 当前是否浅色模式（由入口在构建前设置）
@@ -10,19 +12,26 @@ class AppColors {
   static Color get text => light ? const Color(0xFF1E2235) : Colors.white;
 
   /// 背景渐变（上/中/下）
-  static Color get bgTop => light ? const Color(0xFFE9EBF8) : const Color(0xFF0B0E1E);
-  static Color get bgBottom => light ? const Color(0xFFDCE0F4) : const Color(0xFF17123B);
-  static Color get bgThird => light ? const Color(0xFFF2F4FC) : const Color(0xFF0C0822);
+  static Color get bgTop =>
+      light ? const Color(0xFFE9EBF8) : const Color(0xFF0B0E1E);
+  static Color get bgBottom =>
+      light ? const Color(0xFFDCE0F4) : const Color(0xFF17123B);
+  static Color get bgThird =>
+      light ? const Color(0xFFF2F4FC) : const Color(0xFF0C0822);
 
   /// 底部菜单/浮层面板底色
-  static Color get panel => light ? const Color(0xF2FFFFFF) : const Color(0xF21A1E3A);
+  static Color get panel =>
+      light ? const Color(0xF2FFFFFF) : const Color(0xF21A1E3A);
 
   /// 强调面板（导航栏/快照栏/悬浮按钮）
-  static Color get panelStrong => light ? const Color(0xF7FFFFFF) : const Color(0xE61C2148);
+  static Color get panelStrong =>
+      light ? const Color(0xF7FFFFFF) : const Color(0xE61C2148);
 
   /// 终端背景与文字
-  static Color get terminalBg => light ? const Color(0xF7FFFFFF) : const Color(0xE60A0D18);
-  static Color get terminalText => light ? const Color(0xFF14532D) : const Color(0xFFC9F0D8);
+  static Color get terminalBg =>
+      light ? const Color(0xF7FFFFFF) : const Color(0xE60A0D18);
+  static Color get terminalText =>
+      light ? const Color(0xFF14532D) : const Color(0xFFC9F0D8);
 
   // 品牌色（深浅模式通用）
   static const violet = Color(0xFF8B7CFF);
@@ -50,6 +59,9 @@ ThemeData buildTheme() {
     splashColor: Colors.transparent,
   );
   return base.copyWith(
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {TargetPlatform.android: FrostedPageTransitionsBuilder()},
+    ),
     textTheme: base.textTheme.apply(
       bodyColor: AppColors.text,
       displayColor: AppColors.text,
@@ -87,7 +99,10 @@ ThemeData buildTheme() {
       fillColor: AppColors.text.withOpacity(0.06),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       labelStyle: TextStyle(color: AppColors.text.withOpacity(0.65)),
-      hintStyle: TextStyle(color: AppColors.text.withOpacity(0.35), fontSize: 12.5),
+      hintStyle: TextStyle(
+        color: AppColors.text.withOpacity(0.35),
+        fontSize: 12.5,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide.none,

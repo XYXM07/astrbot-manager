@@ -8,6 +8,7 @@ import 'screens/main_shell.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'widgets/update_dialog.dart';
+import 'widgets/motion.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,13 +82,36 @@ class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
+    final Widget page;
     if (app.loading) {
-      return Scaffold(
+      page = Scaffold(
+        key: const ValueKey('loading'),
         backgroundColor: AppColors.bgTop,
-        body: const Center(child: CircularProgressIndicator(color: AppColors.violet)),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.violet),
+        ),
       );
+    } else if (app.config == null) {
+      page = ConnectionScreen(key: const ValueKey('connection'));
+    } else {
+      page = MainShell(key: const ValueKey('main'));
     }
-    if (app.config == null) return ConnectionScreen();
-    return MainShell();
+    return ColoredBox(
+      color: AppColors.bgTop,
+      child: AnimatedSwitcher(
+        duration: AppMotion.duration(context, AppMotion.page),
+        switchInCurve: AppMotion.curve,
+        switchOutCurve: Curves.easeInCubic,
+        layoutBuilder: (current, previous) => Stack(
+          fit: StackFit.expand,
+          children: [
+            for (final child in previous)
+              ExcludeSemantics(child: IgnorePointer(child: child)),
+            if (current != null) current,
+          ],
+        ),
+        child: page,
+      ),
+    );
   }
 }

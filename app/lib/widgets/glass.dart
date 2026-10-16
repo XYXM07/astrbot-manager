@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../theme.dart';
+import 'motion.dart';
 
 /// 毛玻璃卡片：半透明渐变 + 高光描边
 /// 背景模糊默认由页面级单层模糊提供；[backdropSigma] 非空时卡片自身
@@ -17,7 +18,7 @@ class GlassCard extends StatelessWidget {
   final bool borderless;
   final double? backdropSigma;
 
-   GlassCard({
+  GlassCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(18),
@@ -61,13 +62,22 @@ class GlassCard extends StatelessWidget {
         ),
       ),
     );
-    final card = ClipRRect(borderRadius: BorderRadius.circular(radius), child: content);
+    final card = MotionPress(
+      enabled: onTap != null,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: content,
+      ),
+    );
     // 二级菜单专用：高强度背景模糊，防止与下层内容视觉重叠
     if (backdropSigma != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: backdropSigma!, sigmaY: backdropSigma!),
+          filter: ImageFilter.blur(
+            sigmaX: backdropSigma!,
+            sigmaY: backdropSigma!,
+          ),
           child: card,
         ),
       );
@@ -102,33 +112,48 @@ class FrostedButton extends StatelessWidget {
     final accent = color ?? AppColors.violet;
     final enabled = onPressed != null && !loading;
 
-    final Widget inner = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (loading)
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: primary ? AppColors.text : accent,
-            ),
-          )
-        else if (icon != null) ...[
-          Icon(icon, size: 17, color: AppColors.text.withOpacity(0.95)),
-          SizedBox(width: 7),
-        ],
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text.withOpacity(0.94),
-            decoration: TextDecoration.none,
-          ),
-        ),
-      ],
+    final Widget inner = AnimatedSize(
+      duration: AppMotion.duration(context, AppMotion.medium),
+      curve: AppMotion.curve,
+      child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (loading || icon != null) ...[
+                AnimatedSwitcher(
+                  duration: AppMotion.duration(context, AppMotion.medium),
+                  child: loading
+                      ? SizedBox(
+                          key: const ValueKey('loading'),
+                          width: 17,
+                          height: 17,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primary ? AppColors.text : accent,
+                          ),
+                        )
+                      : Icon(
+                          icon,
+                          key: ValueKey(icon),
+                          size: 17,
+                          color: AppColors.text.withOpacity(0.95),
+                        ),
+                ),
+                SizedBox(width: 7),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text.withOpacity(0.94),
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          )),
     );
 
     final Widget button = primary
@@ -136,7 +161,9 @@ class FrostedButton extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 22, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              gradient: LinearGradient(colors: [AppColors.violet, AppColors.cyan]),
+              gradient: LinearGradient(
+                colors: [AppColors.violet, AppColors.cyan],
+              ),
             ),
             child: inner,
           )
@@ -152,9 +179,20 @@ class FrostedButton extends StatelessWidget {
 
     return SizedBox(
       width: expanded ? double.infinity : null,
-      child: Opacity(
+      child: AnimatedOpacity(
         opacity: enabled ? 1 : 0.55,
-        child: GestureDetector(onTap: enabled ? onPressed : null, child: button),
+        duration: AppMotion.duration(context, AppMotion.medium),
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          child: MotionPress(
+            enabled: enabled,
+            child: GestureDetector(
+              onTap: enabled ? onPressed : null,
+              child: button,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -229,7 +267,9 @@ class StatusPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
+          AnimatedContainer(
+            duration: AppMotion.duration(context, AppMotion.medium),
+            curve: AppMotion.curve,
             width: 8,
             height: 8,
             decoration: BoxDecoration(
@@ -239,12 +279,20 @@ class StatusPill extends StatelessWidget {
             ),
           ),
           SizedBox(width: 7),
-          Text(
-            _label,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.text.withOpacity(0.9),
+          AnimatedSize(
+            duration: AppMotion.duration(context, AppMotion.medium),
+            curve: AppMotion.curve,
+            child: AnimatedSwitcher(
+              duration: AppMotion.duration(context, AppMotion.medium),
+              child: Text(
+                _label,
+                key: ValueKey(_label),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text.withOpacity(0.9),
+                ),
+              ),
             ),
           ),
         ],
@@ -305,10 +353,14 @@ class GlassTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, size: 20, color: AppColors.text.withOpacity(0.6)),
+        prefixIcon: Icon(
+          icon,
+          size: 20,
+          color: AppColors.text.withOpacity(0.6),
+        ),
         suffixIcon: suffix ??
             (onToggleObscure != null
-                ? IconButton(
+                ? MotionIconButton(
                     icon: Icon(
                       obscure ? Icons.visibility_off : Icons.visibility,
                       size: 19,
@@ -320,7 +372,10 @@ class GlassTextField extends StatelessWidget {
         filled: true,
         fillColor: AppColors.text.withOpacity(0.06),
         labelStyle: TextStyle(color: AppColors.text.withOpacity(0.65)),
-        hintStyle: TextStyle(color: AppColors.text.withOpacity(0.35), fontSize: 12.5),
+        hintStyle: TextStyle(
+          color: AppColors.text.withOpacity(0.35),
+          fontSize: 12.5,
+        ),
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         // 全部使用无描边圆角（无任何线条，避免黄线现象）
         border: OutlineInputBorder(

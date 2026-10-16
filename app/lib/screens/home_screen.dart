@@ -13,8 +13,10 @@ import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/background.dart';
 import '../widgets/glass.dart';
+import '../widgets/motion.dart';
 import '../widgets/service_editor.dart';
 import '../widgets/service_icon.dart';
+import '../widgets/shell_layout.dart';
 import 'connection_screen.dart';
 import 'logs_screen.dart';
 
@@ -67,50 +69,79 @@ class _HomeScreenState extends State<HomeScreen> {
     _syncAutoRefresh(app.settings.autoRefreshSeconds);
     return GradientBackground(
       child: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: () => app.refreshAll(),
           color: AppColors.violet,
           backgroundColor: AppColors.light ? Colors.white : Color(0xFF232959),
           child: CustomScrollView(
-            physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             slivers: [
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
-                sliver: SliverToBoxAdapter(child: _header(app, cfg)),
+                sliver: SliverToBoxAdapter(
+                  child: MotionEntrance(child: _header(app, cfg)),
+                ),
               ),
               if (app.metrics != null)
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
-                  sliver: SliverToBoxAdapter(child: _MetricsCard(m: app.metrics!)),
+                  sliver: SliverToBoxAdapter(
+                    child: MotionEntrance(
+                      order: 1,
+                      child: _MetricsCard(m: app.metrics!),
+                    ),
+                  ),
                 ),
               if (app.connected)
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
-                  sliver: SliverToBoxAdapter(child: _serverPowerCard(app)),
+                  sliver: SliverToBoxAdapter(
+                    child: MotionEntrance(
+                      order: 2,
+                      child: _serverPowerCard(app),
+                    ),
+                  ),
                 ),
               if (app.connError != null &&
-                  (app.connState == ConnState.error || app.connState == ConnState.disconnected))
+                  (app.connState == ConnState.error ||
+                      app.connState == ConnState.disconnected))
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
                   sliver: SliverToBoxAdapter(child: _banner(app)),
                 ),
               SliverPadding(
+                key: const ValueKey('services'),
                 padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
                       final s = cfg.services[i];
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: _ServiceCard(service: s, app: app),
+                      return MotionEntrance(
+                        key: ValueKey(s.id),
+                        order: i + 3,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 16),
+                          child: _ServiceCard(service: s, app: app),
+                        ),
                       );
+                    },
+                    findChildIndexCallback: (key) {
+                      if (key is! ValueKey<String>) return null;
+                      final index = cfg.services.indexWhere(
+                        (s) => s.id == key.value,
+                      );
+                      return index < 0 ? null : index;
                     },
                     childCount: cfg.services.length,
                   ),
                 ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 30),
+                padding: EdgeInsets.fromLTRB(
+                    20, 0, 20, 30 + ShellLayout.bottomInsetOf(context)),
                 sliver: SliverToBoxAdapter(child: _addServiceCard()),
               ),
             ],
@@ -135,7 +166,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(11),
-                      gradient: LinearGradient(colors: [AppColors.violet, AppColors.cyan]),
+                      gradient: LinearGradient(
+                        colors: [AppColors.violet, AppColors.cyan],
+                      ),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(11),
@@ -154,9 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               SizedBox(height: 10),
-              GestureDetector(
+              MotionTap(
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => ConnectionScreen(editMode: true)),
+                  MaterialPageRoute(
+                    builder: (_) => ConnectionScreen(editMode: true),
+                  ),
                 ),
                 child: _connChip(app, cfg),
               ),
@@ -165,17 +200,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Row(
           children: [
-            _iconBtn(
-              Icons.settings,
-              () => ShellTabs.index.value = 3,
-            ),
+            _iconBtn(Icons.settings, () => ShellTabs.index.value = 3),
             SizedBox(width: 8),
             if (app.connected)
               _iconBtn(Icons.power_settings_new, () {
                 app.disconnect();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(L10n.t('已断开连接'))),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(L10n.t('已断开连接'))));
               }),
             SizedBox(width: 8),
             _iconBtn(
@@ -195,28 +227,42 @@ class _HomeScreenState extends State<HomeScreen> {
     if (p.isNotEmpty && File(p).existsSync()) {
       return Image.file(File(p), width: 40, height: 40, fit: BoxFit.cover);
     }
-    return Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover);
+    return Image.asset(
+      'assets/icon.png',
+      width: 40,
+      height: 40,
+      fit: BoxFit.cover,
+    );
   }
 
   Widget _iconBtn(IconData icon, VoidCallback? onTap, {bool spinning = false}) {
-    return Material(
-      color: AppColors.text.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: spinning ? null : onTap,
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: spinning
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.violet),
-                )
-              : Icon(icon, size: 20, color: AppColors.text.withOpacity(0.85)),
-        ),
-      ),
-    );
+    return MotionPress(
+        enabled: !spinning && onTap != null,
+        child: Material(
+          color: AppColors.text.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: spinning ? null : onTap,
+            child: Padding(
+              padding: EdgeInsets.all(10),
+              child: spinning
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.violet,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 20,
+                      color: AppColors.text.withOpacity(0.85),
+                    ),
+            ),
+          ),
+        ));
   }
 
   Widget _connChip(AppState app, ServerConfig cfg) {
@@ -242,19 +288,26 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
+          AnimatedContainer(
+            duration: AppMotion.duration(context, AppMotion.medium),
+            curve: AppMotion.curve,
             width: 8,
             height: 8,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: color,
-              boxShadow: [BoxShadow(color: color.withOpacity(0.9), blurRadius: 7)],
+              boxShadow: [
+                BoxShadow(color: color.withOpacity(0.9), blurRadius: 7),
+              ],
             ),
           ),
           SizedBox(width: 8),
           Text(
             '${cfg.username}@${cfg.host}:${cfg.port} · $label',
-            style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.75)),
+            style: TextStyle(
+              fontSize: 12.5,
+              color: AppColors.text.withOpacity(0.75),
+            ),
           ),
           SizedBox(width: 4),
           Icon(Icons.edit, size: 13, color: AppColors.text.withOpacity(0.5)),
@@ -299,11 +352,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_circle, size: 20, color: AppColors.text.withOpacity(0.6)),
+          Icon(
+            Icons.add_circle,
+            size: 20,
+            color: AppColors.text.withOpacity(0.6),
+          ),
           SizedBox(width: 8),
           Text(
             L10n.t('添加服务'),
-            style: TextStyle(fontSize: 14, color: AppColors.text.withOpacity(0.6)),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.text.withOpacity(0.6),
+            ),
           ),
         ],
       ),
@@ -362,14 +422,25 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 12),
               Text(
                 reboot ? L10n.t('重启服务器') : L10n.t('强制关机'),
-                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700, color: AppColors.text),
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                ),
               ),
               SizedBox(height: 8),
               Text(
                 reboot
-                    ? L10n.t('将远程执行 {cmd} 命令，服务器将立即重启，SSH 连接会断开。', {'cmd': cmd})
-                    : L10n.t('将远程执行 {cmd} 命令，服务器将立即关机，SSH 连接会断开。', {'cmd': cmd}),
-                style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+                    ? L10n.t('将远程执行 {cmd} 命令，服务器将立即重启，SSH 连接会断开。', {
+                        'cmd': cmd,
+                      })
+                    : L10n.t('将远程执行 {cmd} 命令，服务器将立即关机，SSH 连接会断开。', {
+                        'cmd': cmd,
+                      }),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.text.withOpacity(0.6),
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 18),
@@ -434,9 +505,10 @@ class _MetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final memUsed = m.memUsedKB;
-    final memPct = (memUsed != null && m.memTotalKB != null && m.memTotalKB! > 0)
-        ? (memUsed / m.memTotalKB! * 100).clamp(0.0, 100.0).toDouble()
-        : 0.0;
+    final memPct =
+        (memUsed != null && m.memTotalKB != null && m.memTotalKB! > 0)
+            ? (memUsed / m.memTotalKB! * 100).clamp(0.0, 100.0).toDouble()
+            : 0.0;
     final diskPct = (m.diskUsedKB != null &&
             m.diskTotalKB != null &&
             m.diskTotalKB! > 0)
@@ -463,18 +535,21 @@ class _MetricsCard extends StatelessWidget {
           ),
           SizedBox(height: 12),
           _row(
+            context,
             L10n.t('CPU'),
             m.cpuPercent == null ? '-' : '${m.cpuPercent!.round()}%',
             m.cpuPercent ?? 0,
             AppColors.violet,
           ),
           _row(
+            context,
             L10n.t('内存'),
             '${_g(memUsed)} / ${_g(m.memTotalKB)}',
             memPct,
             AppColors.cyan,
           ),
           _row(
+            context,
             L10n.t('磁盘'),
             '${_g(m.diskUsedKB)} / ${_g(m.diskTotalKB)}',
             diskPct,
@@ -485,7 +560,13 @@ class _MetricsCard extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value, double percent, Color color) {
+  Widget _row(
+    BuildContext context,
+    String label,
+    String value,
+    double percent,
+    Color color,
+  ) {
     return Padding(
       padding: EdgeInsets.only(bottom: 9),
       child: Row(
@@ -507,9 +588,18 @@ class _MetricsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(3),
                 color: AppColors.text.withOpacity(0.10),
               ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: (percent / 100).clamp(0.0, 1.0).toDouble(),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(
+                  begin: 0,
+                  end: (percent / 100).clamp(0.0, 1.0).toDouble(),
+                ),
+                duration: AppMotion.duration(context, AppMotion.page),
+                curve: AppMotion.curve,
+                builder: (context, fraction, child) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: fraction,
+                  child: child,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(3),
@@ -583,8 +673,14 @@ class _ServiceCard extends StatelessWidget {
     switch (st.state) {
       case 'running':
         return Text(
-          L10n.t('已运行 {info}', {'info': '${formatUptime(st.startedAt)}${st.image != null ? ' · ${st.image}' : ''}'}),
-          style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.8)),
+          L10n.t('已运行 {info}', {
+            'info':
+                '${formatUptime(st.startedAt)}${st.image != null ? ' · ${st.image}' : ''}',
+          }),
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppColors.text.withOpacity(0.8),
+          ),
         );
       case 'restarting':
         return Text(
@@ -599,12 +695,18 @@ class _ServiceCard extends StatelessWidget {
       case 'missing':
         return Text(
           L10n.t('未找到该{kind}，请检查配置', {'kind': service.kind.shortLabel}),
-          style: TextStyle(fontSize: 12.5, color: AppColors.gray.withOpacity(0.9)),
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppColors.gray.withOpacity(0.9),
+          ),
         );
       default:
         return Text(
           L10n.t('状态：{state}', {'state': st.state}),
-          style: TextStyle(fontSize: 12.5, color: AppColors.gray.withOpacity(0.9)),
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppColors.gray.withOpacity(0.9),
+          ),
         );
     }
   }
@@ -633,20 +735,30 @@ class _ServiceCard extends StatelessWidget {
                   children: [
                     Text(
                       service.name,
-                      style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(
                       '${service.kind.shortLabel} · ${service.target}',
-                      style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.5)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.text.withOpacity(0.5),
+                      ),
                     ),
                   ],
                 ),
               ),
               StatusPill(state: st.state),
               SizedBox(width: 4),
-              IconButton(
-                icon: Icon(Icons.more_horiz, size: 20, color: AppColors.text.withOpacity(0.6)),
+              MotionIconButton(
+                icon: Icon(
+                  Icons.more_horiz,
+                  size: 20,
+                  color: AppColors.text.withOpacity(0.6),
+                ),
                 onPressed: () => _showActions(context),
               ),
             ],
@@ -672,7 +784,9 @@ class _ServiceCard extends StatelessWidget {
                   label: L10n.t('日志'),
                   icon: Icons.terminal,
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => LogsScreen(service: service)),
+                    MaterialPageRoute(
+                      builder: (_) => LogsScreen(service: service),
+                    ),
                   ),
                 ),
               ),
@@ -711,9 +825,9 @@ class _ServiceCard extends StatelessWidget {
       }
     }
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(L10n.t('已保存'))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(L10n.t('已保存'))));
   }
 
   /// 是否 NapCat 服务（令牌是 NapCat WebUI 专有机制，其他服务不显示该入口）
@@ -732,48 +846,63 @@ class _ServiceCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            ListTile(
-              leading: Icon(Icons.refresh, color: AppColors.text),
-              title: Text(L10n.t('刷新状态'), style: TextStyle(color: AppColors.text)),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                app.refreshOne(service);
-              },
-            ),
-            if (_isNapCat)
-            ListTile(
-              leading: Icon(Icons.key, color: AppColors.text),
-              title: Text(L10n.t('设置 NapCat 令牌'), style: TextStyle(color: AppColors.text)),
-              subtitle: Text(
-                service.webuiToken.trim().isEmpty
-                    ? L10n.t('未设置（打开 WebUI 需手动登录）')
-                    : L10n.t('已设置（打开 WebUI 免登录）'),
-                style: TextStyle(fontSize: 11.5, color: AppColors.text.withOpacity(0.5)),
+              ListTile(
+                leading: Icon(Icons.refresh, color: AppColors.text),
+                title: Text(
+                  L10n.t('刷新状态'),
+                  style: TextStyle(color: AppColors.text),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  app.refreshOne(service);
+                },
               ),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _editToken(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.edit, color: AppColors.text),
-              title: Text(L10n.t('编辑服务'), style: TextStyle(color: AppColors.text)),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                showServiceEditor(context, existing: service);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.delete, color: AppColors.red),
-              title: Text(L10n.t('删除服务'), style: TextStyle(color: AppColors.red)),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                app.removeService(service.id);
-              },
-            ),
-            SizedBox(height: 8),
-          ],
-        ),
+              if (_isNapCat)
+                ListTile(
+                  leading: Icon(Icons.key, color: AppColors.text),
+                  title: Text(
+                    L10n.t('设置 NapCat 令牌'),
+                    style: TextStyle(color: AppColors.text),
+                  ),
+                  subtitle: Text(
+                    service.webuiToken.trim().isEmpty
+                        ? L10n.t('未设置（打开 WebUI 需手动登录）')
+                        : L10n.t('已设置（打开 WebUI 免登录）'),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.text.withOpacity(0.5),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _editToken(context);
+                  },
+                ),
+              ListTile(
+                leading: Icon(Icons.edit, color: AppColors.text),
+                title: Text(
+                  L10n.t('编辑服务'),
+                  style: TextStyle(color: AppColors.text),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  showServiceEditor(context, existing: service);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete, color: AppColors.red),
+                title: Text(
+                  L10n.t('删除服务'),
+                  style: TextStyle(color: AppColors.red),
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  app.removeService(service.id);
+                },
+              ),
+              SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -805,7 +934,11 @@ class _ConfirmRestartDialog extends StatelessWidget {
                 color: AppColors.amber.withOpacity(0.16),
                 border: Border.all(color: AppColors.amber.withOpacity(0.4)),
               ),
-              child: Icon(Icons.warning_amber_rounded, color: AppColors.amber, size: 28),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.amber,
+                size: 28,
+              ),
             ),
             SizedBox(height: 14),
             Text(
@@ -816,7 +949,10 @@ class _ConfirmRestartDialog extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               L10n.t('将远程执行重启命令，服务会短暂离线。'),
-              style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.text.withOpacity(0.6),
+              ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 18),
@@ -898,14 +1034,24 @@ class _TokenDialogState extends State<_TokenDialog> {
                 SizedBox(width: 8),
                 Text(
                   L10n.t('设置 NapCat 令牌'),
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text,
+                  ),
                 ),
               ],
             ),
             SizedBox(height: 8),
             Text(
-              L10n.t('令牌会自动附加到 WebUI 打开地址（?token=xxx），实现免登录打开；NapCat 的令牌可在其配置文件中查看。'),
-              style: TextStyle(fontSize: 11.5, height: 1.5, color: AppColors.text.withOpacity(0.55)),
+              L10n.t(
+                '令牌会自动附加到 WebUI 打开地址（?token=xxx），实现免登录打开；NapCat 的令牌可在其配置文件中查看。',
+              ),
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.5,
+                color: AppColors.text.withOpacity(0.55),
+              ),
             ),
             SizedBox(height: 14),
             GlassTextField(
@@ -913,7 +1059,7 @@ class _TokenDialogState extends State<_TokenDialog> {
               label: L10n.t('NapCat 令牌'),
               icon: Icons.vpn_key,
               masked: true,
-              suffix: IconButton(
+              suffix: MotionIconButton(
                 icon: Icon(
                   _c.maskChar.isEmpty ? Icons.visibility : Icons.visibility_off,
                   size: 19,

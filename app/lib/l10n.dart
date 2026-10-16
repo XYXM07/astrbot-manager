@@ -15,6 +15,7 @@ class L10n {
   }
 
   static const Map<String, String> _en = {
+    '页面加载超时，请重试或关闭会话': 'Page loading timed out. Retry or close the session.',
     // ── 底部导航 ──
     '仪表盘': 'Dashboard',
     '文件': 'Files',

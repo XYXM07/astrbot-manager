@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../widgets/motion.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -128,11 +129,11 @@ class _LogsScreenState extends State<LogsScreen> {
         appBar: AppBar(
           title: Text(L10n.t('{name} · 日志', {'name': service.name})),
           actions: [
-            IconButton(
+            MotionIconButton(
               icon: Icon(Icons.copy, size: 20),
               onPressed: _logs.isEmpty ? null : _copy,
             ),
-            IconButton(
+            MotionIconButton(
               icon: Icon(Icons.refresh, size: 20),
               onPressed: _loading ? null : _fetch,
             ),
@@ -142,7 +143,8 @@ class _LogsScreenState extends State<LogsScreen> {
                 children: [
                   Text(
                     L10n.t('自动'),
-                    style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.6)),
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.text.withOpacity(0.6)),
                   ),
                   Transform.scale(
                     scale: 0.75,
@@ -195,7 +197,8 @@ class _LogsScreenState extends State<LogsScreen> {
                           ),
                           if (_loading && _logs.isEmpty)
                             Center(
-                              child: CircularProgressIndicator(color: AppColors.violet),
+                              child: CircularProgressIndicator(
+                                  color: AppColors.violet),
                             ),
                         ],
                       ),
@@ -321,7 +324,10 @@ class _AiResultSheetState extends State<_AiResultSheet> {
                 SizedBox(width: 8),
                 Text(
                   L10n.t('AI 分析结果'),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text),
                 ),
                 Spacer(),
                 Container(
@@ -331,9 +337,7 @@ class _AiResultSheetState extends State<_AiResultSheet> {
                     color: AppColors.violet.withOpacity(0.14),
                   ),
                   child: Text(
-                    widget.useSelection
-                        ? L10n.t('分析选中内容')
-                        : L10n.t('分析全部日志'),
+                    widget.useSelection ? L10n.t('分析选中内容') : L10n.t('分析全部日志'),
                     style: TextStyle(fontSize: 11.5, color: AppColors.violet),
                   ),
                 ),
@@ -350,7 +354,9 @@ class _AiResultSheetState extends State<_AiResultSheet> {
                       SizedBox(height: 14),
                       Text(
                         L10n.t('正在分析…'),
-                        style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.text.withOpacity(0.6)),
                       ),
                     ],
                   ),

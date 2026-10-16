@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../l10n.dart';
 import '../models/config.dart';
 import '../models/settings.dart';
 import '../services/frame_rate.dart';
@@ -182,11 +183,12 @@ class AppState extends ChangeNotifier {
   /// WebUI 会话列表（多开，切页常驻）
   final List<WebUiSession> webuiSessions = [];
   int webuiActiveIndex = 0;
+  int _webuiSerial = 0;
 
   /// 打开一个新 WebUI 会话并激活
   WebUiSession openWebuiSession(ServiceConfig s) {
     final sess = WebUiSession(
-      id: 'web_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'web_${DateTime.now().microsecondsSinceEpoch}_${_webuiSerial++}',
       service: s,
       app: this,
     );
@@ -208,12 +210,14 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    final svc = cfg.services.firstWhere(
-      (s) => s.id == 'astrbot',
-      orElse: () => cfg.services.first,
-    );
+    final svc = cfg.services.isEmpty
+        ? ServiceConfig(id: 'custom', name: L10n.t('自定义网址'), target: '')
+        : cfg.services.firstWhere(
+            (s) => s.id == 'astrbot',
+            orElse: () => cfg.services.first,
+          );
     final sess = WebUiSession(
-      id: 'web_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'web_${DateTime.now().microsecondsSinceEpoch}_${_webuiSerial++}',
       service: svc,
       app: this,
       directUrl: u,
@@ -232,11 +236,15 @@ class AppState extends ChangeNotifier {
   Future<void> closeWebuiSession(int index) async {
     if (index < 0 || index >= webuiSessions.length) return;
     final s = webuiSessions.removeAt(index);
-    await s.close();
-    if (webuiActiveIndex >= webuiSessions.length) {
+    if (index < webuiActiveIndex) webuiActiveIndex--;
+    if (webuiSessions.isEmpty) {
+      webuiActiveIndex = 0;
+    } else if (webuiActiveIndex >= webuiSessions.length) {
       webuiActiveIndex = webuiSessions.length - 1;
     }
     notifyListeners();
+    await s.close();
+    s.dispose();
   }
 
   void disconnect() {
@@ -296,7 +304,7 @@ class AppState extends ChangeNotifier {
   /// 连接重建后恢复 WebUI 会话：优先只重建隧道并保留页面（保住登录态），
   /// 仅在会话本身出错时整体重建，页面加载失败时才重载。
   Future<void> _restoreWebuiSessions() async {
-    for (final s in webuiSessions) {
+    for (final s in List<WebUiSession>.of(webuiSessions)) {
       if (s.error != null) {
         await s.start();
         continue;
@@ -306,5 +314,15 @@ class AppState extends ChangeNotifier {
         await s.reloadPage();
       }
     }
+  }
+
+  @override
+  void dispose() {
+    for (final session in webuiSessions) {
+      session.dispose();
+    }
+    webuiSessions.clear();
+    ssh.disconnect();
+    super.dispose();
   }
 }

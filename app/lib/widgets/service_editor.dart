@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'motion.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +16,8 @@ import 'glass.dart';
 import 'service_icon.dart';
 
 /// 打开服务编辑对话框（existing 为 null 时表示新增）
-Future<void> showServiceEditor(BuildContext context, {ServiceConfig? existing}) {
+Future<void> showServiceEditor(BuildContext context,
+    {ServiceConfig? existing}) {
   return showDialog<void>(
     context: context,
     barrierColor: Colors.black.withOpacity(0.45),
@@ -94,7 +96,8 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = L10n.t('选择图片失败：{err}', {'err': '$e'}));
+      if (mounted)
+        setState(() => _error = L10n.t('选择图片失败：{err}', {'err': '$e'}));
     }
   }
 
@@ -145,8 +148,7 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
     }
     final app = context.read<AppState>();
     final cfg = ServiceConfig(
-      id: widget.existing?.id ??
-          'svc_${DateTime.now().millisecondsSinceEpoch}',
+      id: widget.existing?.id ?? 'svc_${DateTime.now().millisecondsSinceEpoch}',
       name: _name.text.trim(),
       target: _target.text.trim(),
       kind: _kind,
@@ -164,14 +166,16 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
   Widget _kindChip(ServiceKind k) {
     final selected = k == _kind;
     final c = selected ? _accent : AppColors.text;
-    return GestureDetector(
+    return MotionTap(
       onTap: () => setState(() => _kind = k),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: selected ? _accent.withOpacity(0.2) : AppColors.text.withOpacity(0.06),
+          color: selected
+              ? _accent.withOpacity(0.2)
+              : AppColors.text.withOpacity(0.06),
         ),
         child: Text(
           k.label,
@@ -209,7 +213,7 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 贴图：点击更换（仅接受 1:1 比例）
-                  GestureDetector(
+                  MotionTap(
                     onTap: _pickSticker,
                     child: ServiceIcon(
                       imageAsset: widget.existing?.imageAsset,
@@ -233,7 +237,8 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
               SizedBox(height: 14),
               Text(
                 L10n.t('管理方式'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.60)),
+                style: TextStyle(
+                    fontSize: 12.5, color: AppColors.text.withOpacity(0.60)),
               ),
               SizedBox(height: 8),
               Row(
@@ -257,15 +262,17 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                     ? L10n.t('例如 astrbot（可用下方“检测”自动获取）')
                     : L10n.t('例如 astrbot'),
                 suffix: _kind == ServiceKind.container
-                    ? TextButton(
+                    ? MotionTextButton(
                         onPressed: _detecting ? null : _detect,
                         child: _detecting
                             ? SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : Text(L10n.t('检测'), style: TextStyle(fontSize: 13)),
+                            : Text(L10n.t('检测'),
+                                style: TextStyle(fontSize: 13)),
                       )
                     : null,
               ),
@@ -344,7 +351,10 @@ class _ContainerPicker extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(22, 20, 22, 12),
             child: Text(
               L10n.t('选择容器'),
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text),
             ),
           ),
           Flexible(
@@ -353,14 +363,19 @@ class _ContainerPicker extends StatelessWidget {
               itemCount: list.length,
               itemBuilder: (context, i) {
                 final c = list[i];
-                final color = c.state == 'running' ? AppColors.green : AppColors.gray;
+                final color =
+                    c.state == 'running' ? AppColors.green : AppColors.gray;
                 return ListTile(
                   leading: Icon(Icons.inventory_2, color: color),
                   title: Text(
                     c.name,
-                    style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: AppColors.text, fontWeight: FontWeight.w600),
                   ),
-                  subtitle: Text(c.status, style: TextStyle(color: AppColors.text.withOpacity(0.54), fontSize: 12)),
+                  subtitle: Text(c.status,
+                      style: TextStyle(
+                          color: AppColors.text.withOpacity(0.54),
+                          fontSize: 12)),
                   trailing: StatusPill(state: c.state),
                   onTap: () => Navigator.of(context).pop(c.name),
                 );

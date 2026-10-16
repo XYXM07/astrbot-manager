@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../widgets/motion.dart';
+import '../widgets/shell_layout.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -138,7 +140,10 @@ class _FilesScreenState extends State<FilesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text)),
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text)),
               SizedBox(height: 14),
               GlassTextField(controller: c, label: hint, icon: Icons.edit),
               SizedBox(height: 18),
@@ -212,13 +217,17 @@ class _FilesScreenState extends State<FilesScreen> {
                 paths.length == 1
                     ? L10n.t('确认删除 {name}？', {'name': _base(paths.first)})
                     : L10n.t('确认删除选中的 {n} 项？', {'n': '${paths.length}'}),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 6),
               Text(
                 L10n.t('此操作不可恢复。'),
-                style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.6)),
+                style: TextStyle(
+                    fontSize: 12.5, color: AppColors.text.withOpacity(0.6)),
               ),
               SizedBox(height: 18),
               Row(children: [
@@ -296,7 +305,8 @@ class _FilesScreenState extends State<FilesScreen> {
     try {
       final bytes = await _mgr!.readBytes(f.path);
       final docs = await getApplicationDocumentsDirectory();
-      final dir = Directory('${docs.path}/downloads')..createSync(recursive: true);
+      final dir = Directory('${docs.path}/downloads')
+        ..createSync(recursive: true);
       final file = File('${dir.path}/${f.name}');
       await file.writeAsBytes(bytes);
       await Share.shareXFiles([XFile(file.path)]);
@@ -334,7 +344,10 @@ class _FilesScreenState extends State<FilesScreen> {
                 children: [
                   Text(
                     '${L10n.t('文本预览')} · ${f.name}',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -394,10 +407,28 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   Future<void> _tapFile(RemoteFile f) async {
-    final ext = f.name.contains('.') ? f.name.split('.').last.toLowerCase() : '';
+    final ext =
+        f.name.contains('.') ? f.name.split('.').last.toLowerCase() : '';
     const textExts = {
-      'txt', 'log', 'json', 'yaml', 'yml', 'conf', 'ini', 'md', 'sh', 'py',
-      'js', 'ts', 'css', 'html', 'xml', 'env', 'cfg', 'csv', 'toml',
+      'txt',
+      'log',
+      'json',
+      'yaml',
+      'yml',
+      'conf',
+      'ini',
+      'md',
+      'sh',
+      'py',
+      'js',
+      'ts',
+      'css',
+      'html',
+      'xml',
+      'env',
+      'cfg',
+      'csv',
+      'toml',
     };
     if (textExts.contains(ext) && (f.size ?? 0) <= 512 * 1024) {
       await _preview(f);
@@ -412,14 +443,17 @@ class _FilesScreenState extends State<FilesScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             ListTile(
               leading: Icon(Icons.download, color: AppColors.text),
-              title: Text(L10n.t('下载并分享'), style: TextStyle(color: AppColors.text)),
+              title: Text(L10n.t('下载并分享'),
+                  style: TextStyle(color: AppColors.text)),
               onTap: () {
                 Navigator.of(ctx).pop('share');
               },
             ),
             ListTile(
-              leading: Icon(Icons.drive_file_rename_outline, color: AppColors.text),
-              title: Text(L10n.t('重命名'), style: TextStyle(color: AppColors.text)),
+              leading:
+                  Icon(Icons.drive_file_rename_outline, color: AppColors.text),
+              title:
+                  Text(L10n.t('重命名'), style: TextStyle(color: AppColors.text)),
               onTap: () => Navigator.of(ctx).pop('rename'),
             ),
             ListTile(
@@ -481,6 +515,7 @@ class _FilesScreenState extends State<FilesScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
+          bottom: false,
           child: Column(
             children: [
               if (_clip != null)
@@ -491,18 +526,20 @@ class _FilesScreenState extends State<FilesScreen> {
                   child: Row(children: [
                     Expanded(
                       child: Text(
-                        L10n.t('已复制 {n} 项，点击粘贴到当前目录', {'n': '${_clip!.length}'}),
+                        L10n.t(
+                            '已复制 {n} 项，点击粘贴到当前目录', {'n': '${_clip!.length}'}),
                         style: TextStyle(fontSize: 12, color: AppColors.text),
                       ),
                     ),
-                    GestureDetector(
+                    MotionTap(
                       onTap: () {
                         setState(() {
                           _clip = null;
                           _clipMode = null;
                         });
                       },
-                      child: Icon(Icons.close, size: 16, color: AppColors.text.withOpacity(0.7)),
+                      child: Icon(Icons.close,
+                          size: 16, color: AppColors.text.withOpacity(0.7)),
                     ),
                   ]),
                 ),
@@ -510,7 +547,7 @@ class _FilesScreenState extends State<FilesScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(8, 6, 8, 0),
                 child: Row(children: [
-                  IconButton(
+                  MotionIconButton(
                     icon: Icon(Icons.arrow_upward, size: 20),
                     tooltip: L10n.t('上级目录'),
                     onPressed: _dir == '/' ? null : () => _go(_parent(_dir)),
@@ -520,10 +557,11 @@ class _FilesScreenState extends State<FilesScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(children: [
                         for (final seg in _pathSegments()) ...[
-                          GestureDetector(
+                          MotionTap(
                             onTap: () => _go(seg.path),
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 5),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
                                 color: seg.path == _dir
@@ -534,24 +572,30 @@ class _FilesScreenState extends State<FilesScreen> {
                                 seg.name,
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  fontWeight: seg.path == _dir ? FontWeight.w700 : FontWeight.w400,
-                                  color: AppColors.text.withOpacity(seg.path == _dir ? 1 : 0.65),
+                                  fontWeight: seg.path == _dir
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: AppColors.text
+                                      .withOpacity(seg.path == _dir ? 1 : 0.65),
                                 ),
                               ),
                             ),
                           ),
                           if (seg.path != _dir)
-                            Text('/', style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.4))),
+                            Text('/',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.text.withOpacity(0.4))),
                         ],
                       ]),
                     ),
                   ),
-                  IconButton(
+                  MotionIconButton(
                     icon: Icon(Icons.upload_file, size: 21),
                     tooltip: L10n.t('上传文件'),
                     onPressed: _upload,
                   ),
-                  IconButton(
+                  MotionIconButton(
                     icon: Icon(Icons.refresh, size: 20),
                     onPressed: _loading ? null : _load,
                   ),
@@ -561,12 +605,16 @@ class _FilesScreenState extends State<FilesScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(16, 2, 16, 4),
                 child: Row(children: [
-                  _toolChip(Icons.create_new_folder, L10n.t('新建文件夹'), _newFolder),
+                  _toolChip(
+                      Icons.create_new_folder, L10n.t('新建文件夹'), _newFolder),
                   SizedBox(width: 8),
-                  _toolChip(Icons.drive_file_move, L10n.t('粘贴'), _clip == null ? null : _paste),
+                  _toolChip(Icons.drive_file_move, L10n.t('粘贴'),
+                      _clip == null ? null : _paste),
                   Spacer(),
-                  IconButton(
-                    icon: Icon(_showHidden ? Icons.visibility : Icons.visibility_off, size: 19),
+                  MotionIconButton(
+                    icon: Icon(
+                        _showHidden ? Icons.visibility : Icons.visibility_off,
+                        size: 19),
                     tooltip: L10n.t('显示隐藏文件'),
                     onPressed: () => setState(() => _showHidden = !_showHidden),
                   ),
@@ -580,7 +628,7 @@ class _FilesScreenState extends State<FilesScreen> {
                       PopupMenuItem(value: 'time', child: Text(L10n.t('按时间'))),
                     ],
                   ),
-                  IconButton(
+                  MotionIconButton(
                     icon: Icon(Icons.checklist, size: 20),
                     tooltip: L10n.t('多选'),
                     onPressed: () => setState(() {
@@ -591,52 +639,18 @@ class _FilesScreenState extends State<FilesScreen> {
                 ]),
               ),
               if (_loading)
-                LinearProgressIndicator(minHeight: 2, color: AppColors.violet, backgroundColor: Colors.transparent),
-              Expanded(
-                child: _error != null
-                    ? Center(
-                        child: GlassCard(
-                          tint: AppColors.red,
-                          child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.error, color: AppColors.red, size: 30),
-                            SizedBox(height: 10),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 18),
-                              child: Text(_error!, style: TextStyle(fontSize: 12.5, color: AppColors.text), textAlign: TextAlign.center),
-                            ),
-                            SizedBox(height: 14),
-                            FrostedButton(label: L10n.t('重试'), icon: Icons.refresh, onPressed: _load),
-                          ]),
-                        ),
-                      )
-                    : visible.isEmpty
-                        ? Center(
-                            child: Text(
-                              L10n.t('空目录'),
-                              style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.5)),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            color: AppColors.violet,
-                            child: ListView.builder(
-                              physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                              itemCount: visible.length,
-                              itemBuilder: (context, i) {
-                                final f = visible[i];
-                                final selected = _selected.contains(f.path);
-                                return _tile(f, selected);
-                              },
-                            ),
-                          ),
-              ),
+                LinearProgressIndicator(
+                    minHeight: 2,
+                    color: AppColors.violet,
+                    backgroundColor: Colors.transparent),
               if (_multi)
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 10),
                   decoration: BoxDecoration(
                     color: AppColors.panelStrong,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(18)),
                   ),
                   child: Row(children: [
                     Expanded(
@@ -645,17 +659,21 @@ class _FilesScreenState extends State<FilesScreen> {
                         style: TextStyle(fontSize: 12.5, color: AppColors.text),
                       ),
                     ),
-                    GestureDetector(
+                    MotionTap(
                       onTap: () {
                         if (_selected.length == visible.length) {
                           setState(() => _selected.clear());
                         } else {
-                          setState(() => _selected.addAll(visible.map((e) => e.path)));
+                          setState(() =>
+                              _selected.addAll(visible.map((e) => e.path)));
                         }
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: Text(L10n.t('全选'), style: TextStyle(fontSize: 12.5, color: AppColors.violet)),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Text(L10n.t('全选'),
+                            style: TextStyle(
+                                fontSize: 12.5, color: AppColors.violet)),
                       ),
                     ),
                     _miniBtn(Icons.content_copy, L10n.t('复制'), () {
@@ -677,7 +695,8 @@ class _FilesScreenState extends State<FilesScreen> {
                       });
                     }),
                     _miniBtn(Icons.delete, L10n.t('删除'), () {
-                      if (_selected.isNotEmpty) _deletePaths(_selected.toList());
+                      if (_selected.isNotEmpty)
+                        _deletePaths(_selected.toList());
                     }, danger: true),
                     _miniBtn(Icons.close, L10n.t('取消'), () {
                       setState(() {
@@ -687,6 +706,56 @@ class _FilesScreenState extends State<FilesScreen> {
                     }),
                   ]),
                 ),
+              Expanded(
+                child: _error != null
+                    ? Center(
+                        child: GlassCard(
+                          tint: AppColors.red,
+                          child:
+                              Column(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.error, color: AppColors.red, size: 30),
+                            SizedBox(height: 10),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 18),
+                              child: Text(_error!,
+                                  style: TextStyle(
+                                      fontSize: 12.5, color: AppColors.text),
+                                  textAlign: TextAlign.center),
+                            ),
+                            SizedBox(height: 14),
+                            FrostedButton(
+                                label: L10n.t('重试'),
+                                icon: Icons.refresh,
+                                onPressed: _load),
+                          ]),
+                        ),
+                      )
+                    : visible.isEmpty
+                        ? Center(
+                            child: Text(
+                              L10n.t('空目录'),
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.text.withOpacity(0.5)),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _load,
+                            color: AppColors.violet,
+                            child: ListView.builder(
+                              padding: EdgeInsets.only(
+                                  bottom: ShellLayout.bottomInsetOf(context)),
+                              physics: AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics()),
+                              itemCount: visible.length,
+                              itemBuilder: (context, i) {
+                                final f = visible[i];
+                                final selected = _selected.contains(f.path);
+                                return _tile(f, selected);
+                              },
+                            ),
+                          ),
+              ),
             ],
           ),
         ),
@@ -695,7 +764,7 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   Widget _toolChip(IconData icon, String label, VoidCallback? onTap) {
-    return GestureDetector(
+    return MotionTap(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -704,7 +773,9 @@ class _FilesScreenState extends State<FilesScreen> {
           color: AppColors.text.withOpacity(onTap == null ? 0.04 : 0.08),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 15, color: AppColors.text.withOpacity(onTap == null ? 0.3 : 0.8)),
+          Icon(icon,
+              size: 15,
+              color: AppColors.text.withOpacity(onTap == null ? 0.3 : 0.8)),
           SizedBox(width: 5),
           Text(
             label,
@@ -718,9 +789,10 @@ class _FilesScreenState extends State<FilesScreen> {
     );
   }
 
-  Widget _miniBtn(IconData icon, String label, VoidCallback onTap, {bool danger = false}) {
+  Widget _miniBtn(IconData icon, String label, VoidCallback onTap,
+      {bool danger = false}) {
     final c = danger ? AppColors.red : AppColors.text;
-    return GestureDetector(
+    return MotionTap(
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -734,9 +806,7 @@ class _FilesScreenState extends State<FilesScreen> {
   }
 
   Widget _tile(RemoteFile f, bool selected) {
-    final color = f.isDir
-        ? AppColors.violet
-        : _fileColor(f.name);
+    final color = f.isDir ? AppColors.violet : _fileColor(f.name);
     return ListTile(
       dense: true,
       leading: Icon(
@@ -757,14 +827,17 @@ class _FilesScreenState extends State<FilesScreen> {
       trailing: _multi
           ? Icon(
               selected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: selected ? AppColors.violet : AppColors.text.withOpacity(0.35),
+              color: selected
+                  ? AppColors.violet
+                  : AppColors.text.withOpacity(0.35),
               size: 21,
             )
           : (f.isDir
               ? null
               : Text(
                   _fmtTime(f.mtime),
-                  style: TextStyle(fontSize: 10.5, color: AppColors.text.withOpacity(0.4)),
+                  style: TextStyle(
+                      fontSize: 10.5, color: AppColors.text.withOpacity(0.4)),
                 )),
       onTap: () {
         if (_multi) {

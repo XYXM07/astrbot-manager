@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../widgets/motion.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../l10n.dart';
 import '../models/config.dart';
@@ -22,7 +24,8 @@ class WebUiSessionsPage extends StatelessWidget {
     final picked = await showModalBottomSheet<ServiceConfig>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => FrostedSheet(child: _ServicePicker(services: cfg.services)),
+      builder: (ctx) =>
+          FrostedSheet(child: _ServicePicker(services: cfg.services)),
     );
     if (picked != null && context.mounted) {
       context.read<AppState>().openWebuiSession(picked);
@@ -46,9 +49,11 @@ class WebUiSessionsPage extends StatelessWidget {
     final app = context.watch<AppState>();
     final sessions = app.webuiSessions;
     return GradientBackground(
+      noBlur: true,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
+          bottom: false,
           child: sessions.isEmpty
               ? _emptyState(context)
               : Column(
@@ -67,7 +72,7 @@ class WebUiSessionsPage extends StatelessWidget {
                                 final s = sessions[i];
                                 return Padding(
                                   padding: EdgeInsets.only(right: 8),
-                                  child: GestureDetector(
+                                  child: MotionTap(
                                     onTap: () => app.selectWebuiSession(i),
                                     child: Container(
                                       padding: EdgeInsets.only(
@@ -89,21 +94,24 @@ class WebUiSessionsPage extends StatelessWidget {
                                             s.label,
                                             style: TextStyle(
                                               fontSize: 12.5,
-                                              fontWeight: i == app.webuiActiveIndex
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
+                                              fontWeight:
+                                                  i == app.webuiActiveIndex
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500,
                                               color: AppColors.text,
                                             ),
                                           ),
                                           SizedBox(width: 6),
-                                          GestureDetector(
-                                            onTap: () => app.closeWebuiSession(i),
+                                          MotionTap(
+                                            onTap: () =>
+                                                app.closeWebuiSession(i),
                                             child: Padding(
                                               padding: EdgeInsets.all(3),
                                               child: Icon(
                                                 Icons.close,
                                                 size: 15,
-                                                color: AppColors.text.withOpacity(0.7),
+                                                color: AppColors.text
+                                                    .withOpacity(0.7),
                                               ),
                                             ),
                                           ),
@@ -115,13 +123,15 @@ class WebUiSessionsPage extends StatelessWidget {
                               },
                             ),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.add, size: 22, color: AppColors.text),
+                          MotionIconButton(
+                            icon: Icon(Icons.add,
+                                size: 22, color: AppColors.text),
                             tooltip: L10n.t('打开 WebUI'),
                             onPressed: () => _openNew(context),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.refresh, size: 20, color: AppColors.text),
+                          MotionIconButton(
+                            icon: Icon(Icons.refresh,
+                                size: 20, color: AppColors.text),
                             tooltip: L10n.t('重新加载页面'),
                             onPressed: () {
                               if (app.webuiActiveIndex >= 0 &&
@@ -130,8 +140,9 @@ class WebUiSessionsPage extends StatelessWidget {
                               }
                             },
                           ),
-                          IconButton(
-                            icon: Icon(Icons.add_link, size: 21, color: AppColors.text),
+                          MotionIconButton(
+                            icon: Icon(Icons.add_link,
+                                size: 21, color: AppColors.text),
                             tooltip: L10n.t('自定义网址'),
                             onPressed: () => _openCustom(context),
                           ),
@@ -143,7 +154,15 @@ class WebUiSessionsPage extends StatelessWidget {
                         index: app.webuiActiveIndex,
                         children: [
                           for (var i = 0; i < sessions.length; i++)
-                            _SessionView(session: sessions[i], index: i),
+                            TickerMode(
+                              key: ValueKey(sessions[i].id),
+                              enabled: i == app.webuiActiveIndex,
+                              child: IgnorePointer(
+                                ignoring: i != app.webuiActiveIndex,
+                                child: _SessionView(
+                                    session: sessions[i], index: i),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -164,13 +183,17 @@ class WebUiSessionsPage extends StatelessWidget {
             SizedBox(height: 10),
             Text(
               L10n.t('还没有打开的 WebUI'),
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text),
             ),
             SizedBox(height: 6),
             Text(
               L10n.t('通过 SSH 隧道安全访问 AstrBot / NapCat 后台，\n可同时打开多个会话'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.55)),
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.text.withOpacity(0.55)),
             ),
             SizedBox(height: 14),
             FrostedButton(
@@ -210,7 +233,10 @@ class _SessionView extends StatelessWidget {
                     Icon(Icons.error, color: AppColors.red, size: 30),
                     SizedBox(height: 12),
                     Text(
-                      L10n.t('无法打开 {name} 的 WebUI\n\n{err}', {'name': session.service.name, 'err': session.error ?? ''}),
+                      L10n.t('无法打开 {name} 的 WebUI\n\n{err}', {
+                        'name': session.service.name,
+                        'err': session.error ?? ''
+                      }),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: AppColors.text),
                     ),
@@ -249,8 +275,10 @@ class _SessionView extends StatelessWidget {
                 Text(
                   session.directUrl != null
                       ? L10n.t('正在打开 {name}…', {'name': session.label})
-                      : L10n.t('正在通过 SSH 隧道连接 {name}…', {'name': session.service.name}),
-                  style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.7)),
+                      : L10n.t('正在通过 SSH 隧道连接 {name}…',
+                          {'name': session.service.name}),
+                  style: TextStyle(
+                      fontSize: 13, color: AppColors.text.withOpacity(0.7)),
                 ),
               ],
             ),
@@ -258,7 +286,17 @@ class _SessionView extends StatelessWidget {
         }
         return Stack(
           children: [
-            WebViewWidget(controller: c),
+            KeyedSubtree(
+              key: ObjectKey(c),
+              child: c.platform is AndroidWebViewController
+                  ? WebViewWidget.fromPlatformCreationParams(
+                      params: AndroidWebViewWidgetCreationParams(
+                        controller: c.platform,
+                        displayWithHybridComposition: true,
+                      ),
+                    )
+                  : WebViewWidget(controller: c),
+            ),
             if (session.connecting)
               Positioned(
                 top: 0,
@@ -285,14 +323,16 @@ class _SessionView extends StatelessWidget {
                       Expanded(
                         child: Text(
                           session.pageError!,
-                          style: TextStyle(fontSize: 12.5, color: AppColors.text),
+                          style:
+                              TextStyle(fontSize: 12.5, color: AppColors.text),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      TextButton(
-                        onPressed: session.start,
-                        child: Text(L10n.t('重试'), style: TextStyle(fontSize: 13)),
+                      MotionTextButton(
+                        onPressed: session.reloadPage,
+                        child:
+                            Text(L10n.t('重试'), style: TextStyle(fontSize: 13)),
                       ),
                     ],
                   ),
@@ -320,7 +360,10 @@ class _ServicePicker extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(22, 20, 22, 12),
             child: Text(
               L10n.t('选择要打开 WebUI 的服务'),
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text),
             ),
           ),
           Flexible(
@@ -339,13 +382,16 @@ class _ServicePicker extends StatelessWidget {
                   ),
                   title: Text(
                     s.name,
-                    style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: AppColors.text, fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
                     L10n.t('端口 {port}', {'port': '${s.webuiPort}'}),
-                    style: TextStyle(color: AppColors.text.withOpacity(0.54), fontSize: 12),
+                    style: TextStyle(
+                        color: AppColors.text.withOpacity(0.54), fontSize: 12),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: AppColors.text.withOpacity(0.54)),
+                  trailing: Icon(Icons.chevron_right,
+                      color: AppColors.text.withOpacity(0.54)),
                   onTap: () => Navigator.of(context).pop(s),
                 );
               },
@@ -377,8 +423,7 @@ class _CustomUrlDialogState extends State<_CustomUrlDialog> {
 
   void _submit() {
     final u = _url.text.trim();
-    if (u.isEmpty ||
-        !(u.startsWith('http://') || u.startsWith('https://'))) {
+    if (u.isEmpty || !(u.startsWith('http://') || u.startsWith('https://'))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.t('请输入要打开的网址（以 http:// 或 https:// 开头）'))),
       );
@@ -403,12 +448,16 @@ class _CustomUrlDialogState extends State<_CustomUrlDialog> {
           children: [
             Text(
               L10n.t('自定义网址'),
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.text),
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text),
             ),
             SizedBox(height: 6),
             Text(
               L10n.t('直接打开任意网址（无需 SSH 隧道）'),
-              style: TextStyle(fontSize: 12, color: AppColors.text.withOpacity(0.55)),
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.text.withOpacity(0.55)),
             ),
             SizedBox(height: 14),
             GlassTextField(

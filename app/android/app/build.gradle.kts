@@ -5,6 +5,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseStorePath = System.getenv("KEYSTORE_PATH")
+val releaseStorePassword = System.getenv("KEYSTORE_PASS")
+
 android {
     namespace = "dev.astr.astrbot_manager"
     compileSdk = flutter.compileSdkVersion
@@ -30,11 +33,26 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (!releaseStorePath.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseStorePath)
+                storePassword = requireNotNull(releaseStorePassword) {
+                    "KEYSTORE_PASS is required when KEYSTORE_PATH is set"
+                }
+                keyAlias = "astrbot"
+                keyPassword = releaseStorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // CI supplies the stable release key; local development can use
+            // the debug key when no release keystore is configured.
+            signingConfig = signingConfigs.getByName(
+                if (releaseStorePath.isNullOrBlank()) "debug" else "release"
+            )
         }
     }
 }

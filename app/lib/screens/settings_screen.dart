@@ -14,6 +14,8 @@ import '../utils/image_utils.dart';
 import '../version.dart';
 import '../widgets/background.dart';
 import '../widgets/glass.dart';
+import '../widgets/motion.dart';
+import '../widgets/shell_layout.dart';
 import '../widgets/update_dialog.dart';
 
 /// APP 设置页
@@ -57,16 +59,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       if (picked == null) return;
       final dir = await getApplicationDocumentsDirectory();
-      final dest = '${dir.path}/bg_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final dest =
+          '${dir.path}/bg_${DateTime.now().millisecondsSinceEpoch}.jpg';
       await File(picked.path).copy(dest);
       if (!mounted) return;
       await app.updateSettings(
         app.settings.copyWith(backgroundImagePath: dest),
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.t('背景已更新'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(L10n.t('背景已更新'))));
       }
     } catch (e) {
       if (mounted) {
@@ -92,9 +95,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final img = await decodeImage(bytes);
       if (img.width != img.height) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(L10n.t('请选择 1:1 比例的图片'))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(L10n.t('请选择 1:1 比例的图片'))));
         }
         return;
       }
@@ -103,13 +106,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '${dir.path}/logo_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(picked.path).copy(dest);
       if (!mounted) return;
-      await app.updateSettings(
-        app.settings.copyWith(logoImagePath: dest),
-      );
+      await app.updateSettings(app.settings.copyWith(logoImagePath: dest));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.t('界面图标已更新'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(L10n.t('界面图标已更新'))));
       }
     } catch (e) {
       if (mounted) {
@@ -122,8 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _clearBackground() async {
     final app = context.read<AppState>();
-    await app.updateSettings(      app.settings.copyWith(backgroundImagePath: ''),
-    );
+    await app.updateSettings(app.settings.copyWith(backgroundImagePath: ''));
   }
 
   /// 从当前 API 拉取可用模型列表并选择
@@ -131,9 +131,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final app = context.read<AppState>();
     final s = app.settings;
     if (s.apiBaseUrl.trim().isEmpty || s.apiKey.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(L10n.t('请先在设置中配置 AI 分析 API'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(L10n.t('请先在设置中配置 AI 分析 API'))));
       return;
     }
     final picked = await showModalBottomSheet<String>(
@@ -162,438 +162,453 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 30),
-            children: [
-              _sectionTitle(L10n.t('背景')),
-              GlassCard(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.t('自定义背景图片'),
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.text.withOpacity(0.9),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      hasImage ? L10n.t('已使用自定义背景') : L10n.t('当前使用默认渐变背景'),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.text.withOpacity(0.45),
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FrostedButton(
-                            label: L10n.t('选择图片'),
-                            icon: Icons.photo_library,
-                            primary: true,
-                            onPressed: _pickBackground,
-                          ),
+          bottom: false,
+          child: MotionEntrance(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                  20, 16, 20, 30 + ShellLayout.bottomInsetOf(context)),
+              children: [
+                _sectionTitle(L10n.t('背景')),
+                GlassCard(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        L10n.t('自定义背景图片'),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.text.withOpacity(0.9),
                         ),
-                        if (hasImage) ...[
-                          SizedBox(width: 10),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        hasImage ? L10n.t('已使用自定义背景') : L10n.t('当前使用默认渐变背景'),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.text.withOpacity(0.45),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
                           Expanded(
                             child: FrostedButton(
-                              label: L10n.t('恢复默认'),
-                              icon: Icons.restore,
-                              onPressed: _clearBackground,
+                              label: L10n.t('选择图片'),
+                              icon: Icons.photo_library,
+                              primary: true,
+                              onPressed: _pickBackground,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      L10n.t('界面图标（顶部）'),
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.text.withOpacity(0.9),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      L10n.t('仅接受 1:1 比例的图片'),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.text.withOpacity(0.45),
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FrostedButton(
-                            label: L10n.t('更换图标'),
-                            icon: Icons.image,
-                            onPressed: _pickLogo,
-                          ),
-                        ),
-                        if (s.logoImagePath.isNotEmpty) ...[
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: FrostedButton(
-                              label: L10n.t('恢复默认'),
-                              icon: Icons.restore,
-                              onPressed: () => app.updateSettings(
-                                s.copyWith(logoImagePath: ''),
+                          if (hasImage) ...[
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: FrostedButton(
+                                label: L10n.t('恢复默认'),
+                                icon: Icons.restore,
+                                onPressed: _clearBackground,
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        L10n.t('界面图标（顶部）'),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.text.withOpacity(0.9),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        L10n.t('仅接受 1:1 比例的图片'),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.text.withOpacity(0.45),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FrostedButton(
+                              label: L10n.t('更换图标'),
+                              icon: Icons.image,
+                              onPressed: _pickLogo,
+                            ),
+                          ),
+                          if (s.logoImagePath.isNotEmpty) ...[
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: FrostedButton(
+                                label: L10n.t('恢复默认'),
+                                icon: Icons.restore,
+                                onPressed: () => app.updateSettings(
+                                  s.copyWith(logoImagePath: ''),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              _sectionTitle(L10n.t('显示')),
-              GlassCard(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: Column(
-                  children: [
-                    _switchRow(
-                      title: L10n.t('毛玻璃背景模糊'),
-                      subtitle: L10n.t('整页单层模糊，滚动稳定且流畅'),
-                      value: s.blurEnabled,
-                      onChanged: (v) =>
-                          app.updateSettings(s.copyWith(blurEnabled: v)),
-                    ),
-                    _switchRow(
-                      title: L10n.t('浅色模式'),
-                      subtitle: L10n.t('全局切换为浅色界面'),
-                      value: s.lightMode,
-                      onChanged: (v) =>
-                          app.updateSettings(s.copyWith(lightMode: v)),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            L10n.t('语言'),
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: AppColors.text.withOpacity(0.85),
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            L10n.t('切换界面显示语言，立即生效'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              height: 1.4,
-                              color: AppColors.text.withOpacity(0.45),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              _chip(
-                                '中文',
-                                s.language != 'en',
-                                () => app.updateSettings(
-                                  s.copyWith(language: 'zh'),
-                                ),
-                              ),
-                              _chip(
-                                'English',
-                                s.language == 'en',
-                                () => app.updateSettings(
-                                  s.copyWith(language: 'en'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                _sectionTitle(L10n.t('显示')),
+                GlassCard(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Column(
+                    children: [
+                      _switchRow(
+                        title: L10n.t('毛玻璃背景模糊'),
+                        subtitle: L10n.t('整页单层模糊，滚动稳定且流畅'),
+                        value: s.blurEnabled,
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(blurEnabled: v)),
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                L10n.t('模糊强度'),
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  color: AppColors.text.withOpacity(0.85),
-                                ),
-                              ),
-                              Spacer(),
-                              Text(
-                                s.blurSigma.round().toString(),
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: AppColors.text.withOpacity(0.55),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Slider(
-                            value: s.blurSigma.clamp(8.0, 28.0).toDouble(),
-                            min: 8,
-                            max: 28,
-                            divisions: 10,
-                            activeColor: AppColors.violet,
-                            inactiveColor: AppColors.text.withOpacity(0.2),
-                            onChanged: s.blurEnabled
-                                ? (v) => app.updateSettings(
-                                    s.copyWith(blurSigma: v))
-                                : null,
-                          ),
-                        ],
+                      _switchRow(
+                        title: L10n.t('浅色模式'),
+                        subtitle: L10n.t('全局切换为浅色界面'),
+                        value: s.lightMode,
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(lightMode: v)),
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            L10n.t('刷新率（帧率）'),
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: AppColors.text.withOpacity(0.85),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              L10n.t('语言'),
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.text.withOpacity(0.85),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            L10n.t('按应用锁定帧率，切换后立即生效；无限制则跟随系统'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              height: 1.4,
-                              color: AppColors.text.withOpacity(0.45),
+                            SizedBox(height: 4),
+                            Text(
+                              L10n.t('切换界面显示语言，立即生效'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: AppColors.text.withOpacity(0.45),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              for (final opt in [30, 60, 120, 0])
+                            SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              children: [
                                 _chip(
-                                  opt == 0 ? L10n.t('无限制') : '$opt',
-                                  s.frameRate == opt,
+                                  '中文',
+                                  s.language != 'en',
                                   () => app.updateSettings(
-                                    s.copyWith(frameRate: opt),
+                                    s.copyWith(language: 'zh'),
                                   ),
                                 ),
-                            ],
+                                _chip(
+                                  'English',
+                                  s.language == 'en',
+                                  () => app.updateSettings(
+                                    s.copyWith(language: 'en'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  L10n.t('模糊强度'),
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: AppColors.text.withOpacity(0.85),
+                                  ),
+                                ),
+                                Spacer(),
+                                Text(
+                                  s.blurSigma.round().toString(),
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: AppColors.text.withOpacity(0.55),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Slider(
+                              value: s.blurSigma.clamp(8.0, 28.0).toDouble(),
+                              min: 8,
+                              max: 28,
+                              divisions: 10,
+                              activeColor: AppColors.violet,
+                              inactiveColor: AppColors.text.withOpacity(0.2),
+                              onChanged: s.blurEnabled
+                                  ? (v) => app.updateSettings(
+                                        s.copyWith(blurSigma: v),
+                                      )
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              L10n.t('刷新率（帧率）'),
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.text.withOpacity(0.85),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              L10n.t('按应用锁定帧率，切换后立即生效；无限制则跟随系统'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: AppColors.text.withOpacity(0.45),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                for (final opt in [30, 60, 120, 0])
+                                  _chip(
+                                    opt == 0 ? L10n.t('无限制') : '$opt',
+                                    s.frameRate == opt,
+                                    () => app.updateSettings(
+                                      s.copyWith(frameRate: opt),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _sectionTitle(L10n.t('管理')),
+                GlassCard(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        L10n.t('状态自动刷新'),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.text.withOpacity(0.85),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final opt in [0, 5, 30, 60, 120])
+                            _chip(
+                              opt == 0
+                                  ? L10n.t('关闭')
+                                  : L10n.t('{n} 秒', {'n': '$opt'}),
+                              s.autoRefreshSeconds == opt,
+                              () => app.updateSettings(
+                                s.copyWith(autoRefreshSeconds: opt),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 18),
+                      Text(
+                        L10n.t('日志默认行数'),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.text.withOpacity(0.85),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final opt in [100, 200, 500])
+                            _chip(
+                              L10n.t('{n} 行', {'n': '$opt'}),
+                              s.logLines == opt,
+                              () =>
+                                  app.updateSettings(s.copyWith(logLines: opt)),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Text(
+                            L10n.t('日志字号'),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              color: AppColors.text.withOpacity(0.85),
+                            ),
+                          ),
+                          Spacer(),
+                          Text(
+                            '${s.logFontSize.round()}',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.text.withOpacity(0.55),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              _sectionTitle(L10n.t('管理')),
-              GlassCard(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.t('状态自动刷新'),
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.text.withOpacity(0.85),
+                      Slider(
+                        value: s.logFontSize.clamp(10.0, 24.0).toDouble(),
+                        min: 10,
+                        max: 24,
+                        divisions: 14,
+                        activeColor: AppColors.violet,
+                        inactiveColor: AppColors.text.withOpacity(0.2),
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(logFontSize: v)),
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final opt in [0, 5, 30, 60, 120])
-                          _chip(
-                            opt == 0
-                                ? L10n.t('关闭')
-                                : L10n.t('{n} 秒', {'n': '$opt'}),
-                            s.autoRefreshSeconds == opt,
-                            () => app.updateSettings(
-                              s.copyWith(autoRefreshSeconds: opt),
+                    ],
+                  ),
+                ),
+                _sectionTitle(L10n.t('AI 分析')),
+                GlassCard(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        L10n.t('AI 日志分析'),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.text.withOpacity(0.85),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        L10n.t(
+                          '支持 OpenAI 兼容接口（DeepSeek / 通义千问 / Moonshot 等），用于日志页一键分析报错原因',
+                        ),
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: AppColors.text.withOpacity(0.45),
+                        ),
+                      ),
+                      SizedBox(height: 14),
+                      GlassTextField(
+                        controller: _apiBase,
+                        label: L10n.t('API 地址'),
+                        icon: Icons.dns,
+                        keyboard: TextInputType.url,
+                        hint: 'https://api.deepseek.com/v1',
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(apiBaseUrl: v)),
+                      ),
+                      SizedBox(height: 12),
+                      GlassTextField(
+                        controller: _apiKey,
+                        label: L10n.t('API Key'),
+                        icon: Icons.key,
+                        masked: true,
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(apiKey: v)),
+                      ),
+                      SizedBox(height: 12),
+                      GlassTextField(
+                        controller: _apiModel,
+                        label: L10n.t('模型'),
+                        icon: Icons.smart_toy,
+                        hint: 'deepseek-chat',
+                        onChanged: (v) =>
+                            app.updateSettings(s.copyWith(apiModel: v)),
+                      ),
+                      SizedBox(height: 10),
+                      FrostedButton(
+                        label: L10n.t('搜索可用模型'),
+                        icon: Icons.search,
+                        onPressed: _searchModels,
+                      ),
+                    ],
+                  ),
+                ),
+                _sectionTitle(L10n.t('关于')),
+                GlassCard(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'astrbot助手',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.text,
                             ),
                           ),
-                      ],
-                    ),
-                    SizedBox(height: 18),
-                    Text(
-                      L10n.t('日志默认行数'),
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.text.withOpacity(0.85),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final opt in [100, 200, 500])
-                          _chip(
-                            L10n.t('{n} 行', {'n': '$opt'}),
-                            s.logLines == opt,
-                            () => app.updateSettings(
-                              s.copyWith(logLines: opt),
+                          Spacer(),
+                          Text(
+                            'v$appVersion',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.text.withOpacity(0.55),
                             ),
                           ),
-                      ],
-                    ),
-                    SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Text(
-                          L10n.t('日志字号'),
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            color: AppColors.text.withOpacity(0.85),
-                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        L10n.t('作者：星月晓梦_07'),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text.withOpacity(0.75),
                         ),
-                        Spacer(),
-                        Text(
-                          '${s.logFontSize.round()}',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.text.withOpacity(0.55),
-                          ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        L10n.t(
+                          '通过 SSH 直连远程管理服务器上的 AstrBot 与 NapCat。连接凭据仅加密保存在本机，所有操作经 SSH 加密传输。',
                         ),
-                      ],
-                    ),
-                    Slider(
-                      value: s.logFontSize.clamp(10.0, 24.0).toDouble(),
-                      min: 10,
-                      max: 24,
-                      divisions: 14,
-                      activeColor: AppColors.violet,
-                      inactiveColor: AppColors.text.withOpacity(0.2),
-                      onChanged: (v) =>
-                          app.updateSettings(s.copyWith(logFontSize: v)),
-                    ),
-                  ],
-                ),
-              ),
-              _sectionTitle(L10n.t('AI 分析')),
-              GlassCard(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.t('AI 日志分析'),
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.text.withOpacity(0.85),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      L10n.t('支持 OpenAI 兼容接口（DeepSeek / 通义千问 / Moonshot 等），用于日志页一键分析报错原因'),
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.4,
-                        color: AppColors.text.withOpacity(0.45),
-                      ),
-                    ),
-                    SizedBox(height: 14),
-                    GlassTextField(
-                      controller: _apiBase,
-                      label: L10n.t('API 地址'),
-                      icon: Icons.dns,
-                      keyboard: TextInputType.url,
-                      hint: 'https://api.deepseek.com/v1',
-                      onChanged: (v) => app.updateSettings(
-                        s.copyWith(apiBaseUrl: v),
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    GlassTextField(
-                      controller: _apiKey,
-                      label: L10n.t('API Key'),
-                      icon: Icons.key,
-                      masked: true,
-                      onChanged: (v) => app.updateSettings(
-                        s.copyWith(apiKey: v),
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    GlassTextField(
-                      controller: _apiModel,
-                      label: L10n.t('模型'),
-                      icon: Icons.smart_toy,
-                      hint: 'deepseek-chat',
-                      onChanged: (v) => app.updateSettings(
-                        s.copyWith(apiModel: v),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    FrostedButton(
-                      label: L10n.t('搜索可用模型'),
-                      icon: Icons.search,
-                      onPressed: _searchModels,
-                    ),
-                  ],
-                ),
-              ),
-              _sectionTitle(L10n.t('关于')),
-              GlassCard(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('astrbot助手', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
-                        Spacer(),
-                        Text(
-                          'v$appVersion',
-                          style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.55)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.6,
+                          color: AppColors.text.withOpacity(0.55),
                         ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      L10n.t('作者：星月晓梦_07'),
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text.withOpacity(0.75),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      L10n.t('通过 SSH 直连远程管理服务器上的 AstrBot 与 NapCat。连接凭据仅加密保存在本机，所有操作经 SSH 加密传输。'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.6,
-                        color: AppColors.text.withOpacity(0.55),
+                      SizedBox(height: 8),
+                      _switchRow(
+                        title: L10n.t('启动时自动检查更新'),
+                        subtitle: L10n.t('有新版本时弹窗提示'),
+                        value: s.autoCheckUpdate,
+                        onChanged: (v) => app.updateSettings(
+                          s.copyWith(autoCheckUpdate: v),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    _switchRow(
-                      title: L10n.t('启动时自动检查更新'),
-                      subtitle: L10n.t('有新版本时弹窗提示'),
-                      value: s.autoCheckUpdate,
-                      onChanged: (v) => app.updateSettings(
-                        s.copyWith(autoCheckUpdate: v),
+                      SizedBox(height: 4),
+                      FrostedButton(
+                        label: L10n.t('检查更新'),
+                        icon: Icons.system_update_alt,
+                        onPressed: () => performUpdateCheck(context),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    FrostedButton(
-                      label: L10n.t('检查更新'),
-                      icon: Icons.system_update_alt,
-                      onPressed: () => performUpdateCheck(context),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -631,7 +646,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _chip(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
+    return MotionTap(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -706,6 +721,11 @@ class _AnimatedSwitchRowState extends State<_AnimatedSwitchRow> {
   void _toggle(bool v) {
     setState(() => _v = v); // 先本地切换，播放动画
     _timer?.cancel();
+    if (AppMotion.reduced(context)) {
+      _timer = null;
+      widget.onChanged(v);
+      return;
+    }
     _timer = Timer(Duration(milliseconds: 280), () {
       _timer = null;
       widget.onChanged(v);
@@ -813,7 +833,9 @@ class _ModelPickerSheetState extends State<_ModelPickerSheet> {
     final models = _models ?? const <String>[];
     final filtered = _q.trim().isEmpty
         ? models
-        : models.where((m) => m.toLowerCase().contains(_q.trim().toLowerCase())).toList();
+        : models
+            .where((m) => m.toLowerCase().contains(_q.trim().toLowerCase()))
+            .toList();
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -829,14 +851,22 @@ class _ModelPickerSheetState extends State<_ModelPickerSheet> {
                   SizedBox(width: 8),
                   Text(
                     L10n.t('选择模型'),
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text,
+                    ),
                   ),
                   Spacer(),
-                  GestureDetector(
+                  MotionTap(
                     onTap: () => Navigator.of(context).pop(),
                     child: Padding(
                       padding: EdgeInsets.all(6),
-                      child: Icon(Icons.close, size: 20, color: AppColors.text.withOpacity(0.7)),
+                      child: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: AppColors.text.withOpacity(0.7),
+                      ),
                     ),
                   ),
                 ],
@@ -852,7 +882,10 @@ class _ModelPickerSheetState extends State<_ModelPickerSheet> {
                         SizedBox(height: 12),
                         Text(
                           L10n.t('正在获取模型…'),
-                          style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.6)),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.text.withOpacity(0.6),
+                          ),
                         ),
                       ],
                     ),
@@ -896,7 +929,10 @@ class _ModelPickerSheetState extends State<_ModelPickerSheet> {
                     child: Center(
                       child: Text(
                         L10n.t('未找到模型'),
-                        style: TextStyle(fontSize: 13, color: AppColors.text.withOpacity(0.55)),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.text.withOpacity(0.55),
+                        ),
                       ),
                     ),
                   )
@@ -909,10 +945,17 @@ class _ModelPickerSheetState extends State<_ModelPickerSheet> {
                         final id = filtered[i];
                         return ListTile(
                           dense: true,
-                          leading: Icon(Icons.model_training, size: 19, color: AppColors.violet),
+                          leading: Icon(
+                            Icons.model_training,
+                            size: 19,
+                            color: AppColors.violet,
+                          ),
                           title: Text(
                             id,
-                            style: TextStyle(fontSize: 13.5, color: AppColors.text),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              color: AppColors.text,
+                            ),
                           ),
                           onTap: () => Navigator.of(context).pop(id),
                         );

@@ -9,6 +9,7 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/background.dart';
 import '../widgets/glass.dart';
+import '../widgets/motion.dart';
 
 /// 服务器连接配置页（首次使用或修改连接信息）
 class ConnectionScreen extends StatefulWidget {
@@ -65,9 +66,9 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
   Future<void> _submit() async {
     if (_busy) return;
     if (_host.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(L10n.t('请输入服务器地址'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(L10n.t('请输入服务器地址'))));
       return;
     }
     final app = context.read<AppState>();
@@ -93,7 +94,11 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(L10n.t('连接失败：{err}', {'err': app.connError ?? L10n.t('未知错误')}))),
+        SnackBar(
+          content: Text(
+            L10n.t('连接失败：{err}', {'err': app.connError ?? L10n.t('未知错误')}),
+          ),
+        ),
       );
     }
   }
@@ -104,14 +109,21 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     if (p.isNotEmpty && File(p).existsSync()) {
       return Image.file(File(p), width: 86, height: 86, fit: BoxFit.cover);
     }
-    return Image.asset('assets/icon.png', width: 86, height: 86, fit: BoxFit.cover);
+    return Image.asset(
+      'assets/icon.png',
+      width: 86,
+      height: 86,
+      fit: BoxFit.cover,
+    );
   }
 
   Widget _authChip(String label, bool selected, VoidCallback onTap) {
     // 带按钮背景的登录方式切换（遮挡背景渲染异常）
-    return GestureDetector(
+    return MotionTap(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: AppMotion.duration(context, AppMotion.medium),
+        curve: AppMotion.curve,
         padding: EdgeInsets.symmetric(vertical: 11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -144,150 +156,184 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       child: GradientBackground(
         noBlur: true,
         child: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 460),
-              child: Column(
-                children: [
-                  if (widget.editMode)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.text.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(Icons.arrow_back, size: 20, color: AppColors.text),
-                        ),
-                      ),
-                    ),
-                  SizedBox(height: 22),
-                  Container(
-                    width: 86,
-                    height: 86,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      gradient: LinearGradient(
-                        colors: [AppColors.violet, AppColors.cyan],
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: _logoImage(context),
-                    ),
-                  ),
-                  SizedBox(height: 18),
-                  Text(
-                    'astrbot助手',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: AppColors.text,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    widget.editMode ? L10n.t('更新服务器连接信息') : L10n.t('远程管理你的 AstrBot 与 NapCat'),
-                    style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.6), decoration: TextDecoration.none),
-                  ),
-                  SizedBox(height: 26),
-                  Column(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+            child: Center(
+              child: MotionEntrance(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 460),
+                  child: Column(
                     children: [
-                        _SimpleField(
-                          controller: _host,
-                          placeholder: L10n.t('服务器地址（例如 47.100.12.34）'),
-                          icon: Icons.cloud,
-                          keyboard: TextInputType.url,
-                        ),
-                        SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: _SimpleField(
-                                controller: _port,
-                                placeholder: L10n.t('端口'),
-                                icon: Icons.settings_ethernet,
-                                keyboard: TextInputType.number,
+                      if (widget.editMode)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: MotionTap(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.text.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                Icons.arrow_back,
+                                size: 20,
+                                color: AppColors.text,
                               ),
                             ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              flex: 3,
-                              child: _SimpleField(
-                                controller: _user,
-                                placeholder: L10n.t('用户名（root）'),
-                                icon: Icons.person,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                        SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _authChip(L10n.t('阿里云登录'), !_useKey, () => setState(() => _useKey = false)),
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: _authChip(L10n.t('私钥登录'), _useKey, () => setState(() => _useKey = true)),
-                            ),
-                          ],
+                      SizedBox(height: 22),
+                      Container(
+                        width: 86,
+                        height: 86,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          gradient: LinearGradient(
+                            colors: [AppColors.violet, AppColors.cyan],
+                          ),
                         ),
-                        SizedBox(height: 14),
-                        if (!_useKey)
-                            _SimpleField(
-                              controller: _password,
-                              placeholder: L10n.t('密码'),
-                              icon: Icons.lock,
-                              suffix: IconButton(
-                                icon: Icon(
-                                  _password.maskChar.isEmpty
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  size: 19,
-                                  color: AppColors.text.withOpacity(0.6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: _logoImage(context),
+                        ),
+                      ),
+                      SizedBox(height: 18),
+                      Text(
+                        'astrbot助手',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                          color: AppColors.text,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        widget.editMode
+                            ? L10n.t('更新服务器连接信息')
+                            : L10n.t('远程管理你的 AstrBot 与 NapCat'),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.text.withOpacity(0.6),
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      SizedBox(height: 26),
+                      Column(
+                        children: [
+                          _SimpleField(
+                            controller: _host,
+                            placeholder: L10n.t('服务器地址（例如 47.100.12.34）'),
+                            icon: Icons.cloud,
+                            keyboard: TextInputType.url,
+                          ),
+                          SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _SimpleField(
+                                  controller: _port,
+                                  placeholder: L10n.t('端口'),
+                                  icon: Icons.settings_ethernet,
+                                  keyboard: TextInputType.number,
                                 ),
-                                onPressed: () => _toggleMask(_password),
                               ),
-                            )
-                          else ...[
-                            _SimpleField(
-                              controller: _key,
-                              placeholder: L10n.t('私钥 PEM 文本'),
-                              icon: Icons.key,
-                              maxLines: 4,
-                            ),
-                            SizedBox(height: 14),
-                            _SimpleField(
-                              controller: _keyPass,
-                              placeholder: L10n.t('私钥口令（无则留空）'),
-                              icon: Icons.password,
-                              suffix: IconButton(
-                                icon: Icon(
-                                  _keyPass.maskChar.isEmpty
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  size: 19,
-                                  color: AppColors.text.withOpacity(0.6),
+                              SizedBox(width: 12),
+                              Expanded(
+                                flex: 3,
+                                child: _SimpleField(
+                                  controller: _user,
+                                  placeholder: L10n.t('用户名（root）'),
+                                  icon: Icons.person,
                                 ),
-                                onPressed: () => _toggleMask(_keyPass),
                               ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _authChip(
+                                  L10n.t('阿里云登录'),
+                                  !_useKey,
+                                  () => setState(() => _useKey = false),
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: _authChip(
+                                  L10n.t('私钥登录'),
+                                  _useKey,
+                                  () => setState(() => _useKey = true),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 14),
+                          AnimatedSize(
+                            duration: AppMotion.duration(
+                              context,
+                              AppMotion.page,
                             ),
-                          ],
+                            curve: AppMotion.curve,
+                            alignment: Alignment.topCenter,
+                            child: Column(
+                              children: [
+                                if (!_useKey)
+                                  _SimpleField(
+                                    controller: _password,
+                                    placeholder: L10n.t('密码'),
+                                    icon: Icons.lock,
+                                    suffix: MotionIconButton(
+                                      icon: Icon(
+                                        _password.maskChar.isEmpty
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        size: 19,
+                                        color: AppColors.text.withOpacity(0.6),
+                                      ),
+                                      onPressed: () => _toggleMask(_password),
+                                    ),
+                                  )
+                                else ...[
+                                  _SimpleField(
+                                    controller: _key,
+                                    placeholder: L10n.t('私钥 PEM 文本'),
+                                    icon: Icons.key,
+                                    maxLines: 4,
+                                  ),
+                                  SizedBox(height: 14),
+                                  _SimpleField(
+                                    controller: _keyPass,
+                                    placeholder: L10n.t('私钥口令（无则留空）'),
+                                    icon: Icons.password,
+                                    suffix: MotionIconButton(
+                                      icon: Icon(
+                                        _keyPass.maskChar.isEmpty
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        size: 19,
+                                        color: AppColors.text.withOpacity(0.6),
+                                      ),
+                                      onPressed: () => _toggleMask(_keyPass),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                           SizedBox(height: 12),
                           // sudo 行带按钮背景
-                          GestureDetector(
+                          MotionTap(
                             onTap: () => setState(() => _useSudo = !_useSudo),
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
                                 color: AppColors.text.withOpacity(0.08),
@@ -301,17 +347,27 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                                       shape: BoxShape.circle,
                                       color: _useSudo
                                           ? AppColors.violet
-                                          : AppColors.text.withOpacity(0.12),
+                                          : AppColors.text.withOpacity(
+                                              0.12,
+                                            ),
                                     ),
                                     child: _useSudo
-                                        ? Icon(Icons.check, size: 14, color: AppColors.text)
+                                        ? Icon(
+                                            Icons.check,
+                                            size: 14,
+                                            color: AppColors.text,
+                                          )
                                         : null,
                                   ),
                                   SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       L10n.t('命令前加 sudo（非 root 用户请开启）'),
-                                      style: TextStyle(fontSize: 12.5, color: AppColors.text.withOpacity(0.7), decoration: TextDecoration.none),
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: AppColors.text.withOpacity(0.7),
+                                        decoration: TextDecoration.none,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -320,55 +376,69 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                           ),
                         ],
                       ),
-                  if (app.connError != null && app.connState == ConnState.error) ...[
-                    SizedBox(height: 16),
-                    GlassCard(
-                      tint: AppColors.red,
-                      padding: EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error, color: AppColors.red, size: 20),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              app.connError!,
-                              style: TextStyle(fontSize: 13, color: AppColors.text),
-                            ),
+                      if (app.connError != null &&
+                          app.connState == ConnState.error) ...[
+                        SizedBox(height: 16),
+                        GlassCard(
+                          tint: AppColors.red,
+                          padding: EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error, color: AppColors.red, size: 20),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  app.connError!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.text,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
+                      ],
+                      SizedBox(height: 20),
+                      FrostedButton(
+                        label: _busy
+                            ? L10n.t('连接中…')
+                            : (widget.editMode
+                                ? L10n.t('保存并重新连接')
+                                : L10n.t('连接并保存')),
+                        icon: Icons.link,
+                        primary: true,
+                        expanded: true,
+                        loading: _busy,
+                        onPressed: _submit,
                       ),
-                    ),
-                  ],
-                  SizedBox(height: 20),
-                  FrostedButton(
-                    label: _busy
-                        ? L10n.t('连接中…')
-                        : (widget.editMode ? L10n.t('保存并重新连接') : L10n.t('连接并保存')),
-                    icon: Icons.link,
-                    primary: true,
-                    expanded: true,
-                    loading: _busy,
-                    onPressed: _submit,
+                      SizedBox(height: 14),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.text.withOpacity(0.06),
+                        ),
+                        child: Text(
+                          L10n.t('连接信息仅加密保存在本机，直接通过 SSH 连接你的服务器'),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.text.withOpacity(0.45),
+                            decoration: TextDecoration.none,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 14),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: AppColors.text.withOpacity(0.06),
-                    ),
-                    child: Text(
-                      L10n.t('连接信息仅加密保存在本机，直接通过 SSH 连接你的服务器'),
-                      style: TextStyle(fontSize: 11.5, color: AppColors.text.withOpacity(0.45), decoration: TextDecoration.none),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -402,9 +472,8 @@ class _SimpleField extends StatelessWidget {
         color: AppColors.text.withOpacity(0.06),
       ),
       child: Row(
-        crossAxisAlignment: maxLines > 1
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
+        crossAxisAlignment:
+            maxLines > 1 ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Padding(
             padding: EdgeInsets.only(top: maxLines > 1 ? 3 : 0),
@@ -418,7 +487,11 @@ class _SimpleField extends StatelessWidget {
               maxLines: maxLines,
               obscureText: false,
               // 不关闭建议/纠错：避免被系统判定为"安全字段"而弹安全键盘
-              style: TextStyle(fontSize: 15, color: AppColors.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppColors.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration.collapsed(
                 hintText: placeholder,
                 hintStyle: TextStyle(

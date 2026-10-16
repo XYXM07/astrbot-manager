@@ -39,9 +39,11 @@ jobs:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > android/release-keystore.jks
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASS" ]; then
+            echo "::error::The stable release signing key is required."
+            exit 1
           fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > android/release-keystore.jks
         working-directory: app
 
       - name: Build APK
@@ -50,13 +52,23 @@ jobs:
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
           flutter pub get
+          flutter test
           flutter build apk --release
+        working-directory: app
+
+      - name: Verify release signature
+        run: |
+          apksigner=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk \
+            | tee build/release-signature.txt
+          grep -F 'Signer #1 certificate SHA-256 digest: 83650c3a582589f57622cd95f10e6b558b4ce8c7368da33b6d87b792a08aeaf1' \
+            build/release-signature.txt
         working-directory: app
 
       - name: Rename APK
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk \
-            "astrbot助手-${{ github.ref_name }}.apk"
+            "astrbot-manager-${{ github.ref_name }}.apk"
         working-directory: app
 
       - name: Upload APK to Release
@@ -65,7 +77,7 @@ jobs:
         with:
           name: astrbot助手 ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: app/astrbot助手-${{ github.ref_name }}.apk
+          files: app/astrbot-manager-${{ github.ref_name }}.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
